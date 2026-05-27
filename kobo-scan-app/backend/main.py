@@ -184,7 +184,7 @@ OCR TEXT FROM ALL SCANNED PAGES:
 Return a JSON object with kobo field names as keys and extracted values as values."""
 
     anthropic_payload = {
-        "model": "claude-sonnet-4-20250514",
+        "model": "claude-haiku-4-5-20251001",
         "max_tokens": 2000,
         "messages": [{"role": "user", "content": prompt}]
     }
