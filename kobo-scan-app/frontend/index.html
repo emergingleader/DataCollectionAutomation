@@ -474,7 +474,8 @@
 
       if (!resp.ok) {
         document.getElementById('submit-btn').disabled = false;
-        showError(data.detail || 'Kobo submission failed. Please try again.');
+        const errMsg = data.detail || JSON.stringify(data) || 'Kobo submission failed.';
+        showError('Submission failed: ' + errMsg, 'review');
         return;
       }
 
@@ -486,7 +487,7 @@
     } catch(err) {
       hideLoading();
       document.getElementById('submit-btn').disabled = false;
-      showError('Network error during submission. Please check your connection.');
+      showError('Network error during submission: ' + err.message, 'review');
     }
   }
 
@@ -518,15 +519,23 @@
     document.getElementById('loading').classList.remove('show');
   }
 
-  function showError(msg) {
+  function showError(msg, screenName) {
     document.querySelectorAll('.alert-error').forEach(el => el.remove());
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-error';
-    alert.innerHTML = `⚠️ ${msg}`;
-    const card = document.getElementById('screen-upload').querySelector('.card');
-    card.insertBefore(alert, card.firstChild);
-    window.scrollTo(0, 0);
-    setTimeout(() => alert.remove(), 10000);
+    const alertEl = document.createElement('div');
+    alertEl.className = 'alert alert-error';
+    alertEl.innerHTML = `⚠️ ${msg}`;
+
+    // Show on current active screen, not always upload
+    const targetScreen = screenName
+      ? document.getElementById(`screen-${screenName}`)
+      : (document.getElementById('screen-review').classList.contains('hidden')
+          ? document.getElementById('screen-upload')
+          : document.getElementById('screen-review'));
+
+    const firstChild = targetScreen.firstElementChild;
+    targetScreen.insertBefore(alertEl, firstChild);
+    alertEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => alertEl.remove(), 15000);
   }
 
   function resetToUpload() {
