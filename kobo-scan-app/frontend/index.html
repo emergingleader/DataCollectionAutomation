@@ -103,6 +103,18 @@
     .capture-stat.good .num { color: #38a169; }
     .capture-stat.warn .num { color: #dd6b20; }
 
+    /* SMART REVIEW — confidence-based */
+    .auto-accepted-card { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+    .auto-accepted-card summary { font-size: 13px; font-weight: 700; color: #276749; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+    .auto-accepted-card summary::after { content: '▼'; font-size: 11px; transition: transform 0.2s; }
+    .auto-accepted-card[open] summary::after { transform: rotate(180deg); }
+    .accepted-field-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .accepted-field-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #c6f6d5; }
+    .accepted-field-item:last-child { border-bottom: none; }
+    .accepted-field-label { color: #276749; font-weight: 500; flex: 1; }
+    .accepted-field-value { color: #1a365d; font-weight: 600; text-align: right; max-width: 55%; word-break: break-word; }
+    .needs-review-banner { background: #fff5f5; border: 1px solid #fc8181; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #742a2a; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
     .success-screen { text-align: center; padding: 40px 20px; }
     .success-icon { font-size: 64px; margin-bottom: 16px; }
     .success-screen h2 { font-size: 22px; color: #276749; margin-bottom: 8px; }
@@ -428,7 +440,7 @@
     }
   }
 
-  // ── EXTRACT FIELDS ──
+  // ── EXTRACT FIELDS — with parallel OCR + streaming AI mapping ──
   async function extractFields() {
     if (!currentFormSlug) {
       showError('Please select a form first.', 'upload');
@@ -438,15 +450,18 @@
     const fileEntries = Object.entries(selectedFiles);
     if (fileEntries.length === 0) return;
 
-    showLoading(`Scanning ${fileEntries.length > 1 ? fileEntries.length + ' pages' : 'form'}...`);
+    const pageCount = fileEntries.length;
+    showLoading(pageCount > 1
+      ? `📸 Scanning ${pageCount} pages in parallel...`
+      : `📸 Scanning form...`);
 
     const formData = new FormData();
     fileEntries.sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
     fileEntries.forEach(([_, file]) => formData.append('files', file));
 
+    // ── STEP 1: OCR (parallel on backend) ──
     let rawText;
     try {
-      // ✅ FIX: pass ?form= slug in the URL
       const extractResp = await fetch(`/api/extract?form=${encodeURIComponent(currentFormSlug)}`, {
         method: 'POST',
         body: formData
@@ -455,41 +470,87 @@
 
       if (!extractResp.ok) {
         hideLoading();
-        // ✅ FIX: always extract .detail string, never show raw object
         const errMsg = (extractData && extractData.detail) ? extractData.detail : 'OCR failed. Please try clearer images.';
         showError(errMsg, 'upload');
         return;
       }
       rawText = extractData.raw_text;
       const pages = extractData.pages || 1;
-      updateLoading(`Mapping fields from ${pages} page${pages > 1 ? 's' : ''} with AI...`);
+      updateLoading(`🤖 AI mapping fields from ${pages} page${pages > 1 ? 's' : ''}...`);
     } catch(err) {
       hideLoading();
       showError('Network error during OCR: ' + err.message, 'upload');
       return;
     }
 
+    // ── STEP 2: AI field mapping — STREAMING ──
+    // We read the response as a stream of Server-Sent Events.
+    // Progress ticks arrive every ~50 chars so the spinner stays alive.
+    // The final 'done' event contains the complete mapped fields.
     try {
-      // ✅ FIX: pass form slug in the JSON body
       const mapResp = await fetch('/api/map', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raw_text: rawText, form: currentFormSlug })
       });
-      const mapData = await mapResp.json();
 
       if (!mapResp.ok) {
+        const errData = await mapResp.json().catch(() => ({}));
         hideLoading();
-        const errMsg = (mapData && mapData.detail) ? mapData.detail : 'Field mapping failed. Please try again.';
-        showError(errMsg, 'upload');
+        showError((errData && errData.detail) ? errData.detail : 'Field mapping failed.', 'upload');
         return;
       }
 
-      currentMappedFields = mapData.mapped_fields;
-      formConfig = mapData.form_config;
-      fieldReview = mapData.field_review || [];
+      // Read the SSE stream
+      const reader = mapResp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let charsProcessed = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Keep incomplete last line in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const dataStr = line.slice(5).trim();
+          if (!dataStr) continue;
+
+          let event;
+          try { event = JSON.parse(dataStr); } catch { continue; }
+
+          if (event.error) {
+            hideLoading();
+            showError(event.error, 'upload');
+            return;
+          }
+
+          if (event.type === 'progress') {
+            // Update spinner text with live character count
+            charsProcessed = event.chars || charsProcessed;
+            updateLoading(`🤖 AI reading form... (${charsProcessed} chars processed)`);
+          }
+
+          if (event.type === 'done') {
+            // Got the final complete result
+            currentMappedFields = event.mapped_fields;
+            formConfig = event.form_config;
+            fieldReview = event.field_review || [];
+            hideLoading();
+            renderReview();
+            return;
+          }
+        }
+      }
+
+      // If we exit the loop without a 'done' event something went wrong
       hideLoading();
-      renderReview();
+      showError('AI response ended unexpectedly. Please try again.', 'upload');
+
     } catch(err) {
       hideLoading();
       showError('Network error during field mapping: ' + err.message, 'upload');
@@ -501,22 +562,21 @@
     const container = document.getElementById('review-fields');
     container.innerHTML = '';
 
-    // ✅ FIX: dynamic review — works for ALL forms, not just EL Baseline
-    // Group fields by detected section patterns or just show all flat
-    const captured = fieldReview.filter(f => f.captured).length;
+    // Split into auto-accepted (high confidence) and needs-review (low/missing)
+    const autoAccepted = fieldReview.filter(f => !f.needs_review && f.value !== null && f.value !== undefined);
+    const needsReview  = fieldReview.filter(f => f.needs_review || f.value === null || f.value === undefined);
     const total = fieldReview.length;
-    const missed = total - captured;
 
-    // Show capture summary
+    // ── Summary stats ──
     const summaryEl = document.getElementById('capture-summary');
     summaryEl.innerHTML = `
       <div class="capture-stat good">
-        <div class="num">${captured}</div>
-        <div class="lbl">Fields detected</div>
+        <div class="num">${autoAccepted.length}</div>
+        <div class="lbl">Auto-accepted ✅</div>
       </div>
-      <div class="capture-stat ${missed > 0 ? 'warn' : 'good'}">
-        <div class="num">${missed}</div>
-        <div class="lbl">Need review</div>
+      <div class="capture-stat ${needsReview.length > 0 ? 'warn' : 'good'}">
+        <div class="num">${needsReview.length}</div>
+        <div class="lbl">Need review ⚠️</div>
       </div>
       <div class="capture-stat">
         <div class="num">${total}</div>
@@ -524,15 +584,61 @@
       </div>
     `;
 
-    // Render all fields in one card (or grouped if section info available)
-    const cardDiv = document.createElement('div');
-    cardDiv.className = 'card';
+    // ── Fields needing review — shown expanded at the top ──
+    if (needsReview.length > 0) {
+      const banner = document.createElement('div');
+      banner.className = 'needs-review-banner';
+      banner.innerHTML = `⚠️ ${needsReview.length} field${needsReview.length > 1 ? 's' : ''} need your attention — please check and correct before submitting.`;
+      container.appendChild(banner);
 
-    fieldReview.forEach(fieldDef => {
-      cardDiv.appendChild(createFieldGroup(fieldDef, fieldDef.value));
-    });
+      const reviewCard = document.createElement('div');
+      reviewCard.className = 'card';
+      needsReview.forEach(f => reviewCard.appendChild(createFieldGroup(f, f.value)));
+      container.appendChild(reviewCard);
+    }
 
-    container.appendChild(cardDiv);
+    // ── Auto-accepted fields — shown collapsed in a green summary ──
+    if (autoAccepted.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'auto-accepted-card';
+      if (needsReview.length === 0) details.open = true; // Open if nothing to review
+
+      const summary = document.createElement('summary');
+      summary.innerHTML = `✅ ${autoAccepted.length} fields auto-accepted (high confidence) — tap to review`;
+      details.appendChild(summary);
+
+      const list = document.createElement('div');
+      list.className = 'accepted-field-list';
+      autoAccepted.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'accepted-field-item';
+        item.dataset.fieldName = f.kobo_name;
+
+        // Display value — for options show the label not the key
+        let displayValue = f.value;
+        if (f.options && f.value) {
+          const keys = String(f.value).split(' ');
+          const labels = keys.map(k => f.options[k] || k);
+          displayValue = labels.join(', ');
+        }
+
+        item.innerHTML = `
+          <span class="accepted-field-label">${f.label}</span>
+          <span class="accepted-field-value">${displayValue || '—'}</span>
+        `;
+        list.appendChild(item);
+      });
+      details.appendChild(list);
+      container.appendChild(details);
+    }
+
+    // If everything was auto-accepted with no review needed
+    if (needsReview.length === 0) {
+      const allGoodBanner = document.createElement('div');
+      allGoodBanner.className = 'alert alert-success';
+      allGoodBanner.innerHTML = '✅ <strong>All fields detected with high confidence.</strong> Review the summary above and submit when ready.';
+      container.insertBefore(allGoodBanner, container.firstChild);
+    }
 
     document.getElementById('step-3-ind').classList.add('active');
     document.getElementById('line-2').classList.add('done');
