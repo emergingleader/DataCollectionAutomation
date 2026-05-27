@@ -189,14 +189,18 @@ Return a JSON object with kobo field names as keys and extracted values as value
         "messages": [{"role": "user", "content": prompt}]
     }
 
-   async with httpx.AsyncClient(timeout=60.0) as client:
-    response = await client.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "Content-Type": "application/json",
-            "anthropic-version": "2023-06-01",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", "")
-        },
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not anthropic_key:
+        raise HTTPException(status_code=500, detail="Anthropic API key not configured. Add ANTHROPIC_API_KEY to environment variables.")
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type": "application/json",
+                "anthropic-version": "2023-06-01",
+                "x-api-key": anthropic_key
+            },
             json=anthropic_payload
         )
 
