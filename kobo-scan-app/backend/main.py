@@ -247,9 +247,8 @@ async def submit_to_kobo(payload: dict):
 
     asset_uid = FORM_CONFIG["asset_uid"]
 
-    # Kobo API v2 requires submission via the submissions endpoint
-    # with data wrapped in a 'submission' key
-    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/data/"
+    # Kobo v2 correct submission endpoint
+    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/submissions/"
 
     headers = {
         "Authorization": f"Token {KOBO_TOKEN}",
@@ -259,12 +258,9 @@ async def submit_to_kobo(payload: dict):
     now = datetime.utcnow().isoformat() + "Z"
     clean_fields["start"] = now
     clean_fields["end"] = now
-    clean_fields["__version__"] = ""  # Kobo sometimes requires this
-
-    submission_body = {"submission": clean_fields}
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(url, headers=headers, json=submission_body)
+        response = await client.post(url, headers=headers, json=clean_fields)
 
     if response.status_code in (200, 201):
         try:
@@ -274,21 +270,9 @@ async def submit_to_kobo(payload: dict):
             sub_id = "confirmed"
         return {"success": True, "submission_id": sub_id, "message": "Submitted successfully to Kobo."}
 
-    # If wrapped submission fails, try flat JSON (some Kobo versions prefer this)
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response2 = await client.post(url, headers=headers, json=clean_fields)
-
-    if response2.status_code in (200, 201):
-        try:
-            resp_data = response2.json()
-            sub_id = resp_data.get("id") or resp_data.get("_id") or "confirmed"
-        except Exception:
-            sub_id = "confirmed"
-        return {"success": True, "submission_id": sub_id, "message": "Submitted successfully to Kobo."}
-
     raise HTTPException(
         status_code=502,
-        detail=f"Kobo submission failed: {response2.status_code} — {response2.text[:500]}"
+        detail=f"Kobo submission failed ({response.status_code}): {response.text[:500]}"
     )
 
 
@@ -302,7 +286,7 @@ async def debug_kobo():
         return {"error": "KOBO_TOKEN not set"}
 
     asset_uid = FORM_CONFIG["asset_uid"]
-    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/data/"
+    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/submissions/"
     headers = {"Authorization": f"Token {KOBO_TOKEN}", "Content-Type": "application/json"}
 
     # Send a minimal test submission
