@@ -292,17 +292,41 @@ async def extract_from_images(
 # ─────────────────────────────────────────────
 # STEP 2: MAP — Streaming + confidence scoring
 # ─────────────────────────────────────────────
+def recover_partial_json(text: str) -> dict:
+    """
+    Attempts to salvage fields from a truncated JSON response.
+    Extracts all complete "field": {"value": ..., "confidence": ...} pairs
+    that appeared before the response was cut off.
+    Returns a dict of whatever was successfully parsed.
+    """
+    recovered = {}
+    # Match complete field entries: "field_name": {"value": ..., "confidence": "..."}
+    pattern = r'"([^"]+)"\s*:\s*\{[^}]*"value"\s*:\s*([^,}]+)[^}]*"confidence"\s*:\s*"(high|low)"[^}]*\}'
+    for match in re.finditer(pattern, text):
+        field_name = match.group(1)
+        raw_value = match.group(2).strip().strip('"')
+        confidence = match.group(3)
+        if raw_value.lower() in ("null", "none", ""):
+            recovered[field_name] = {"value": None, "confidence": confidence}
+        else:
+            recovered[field_name] = {"value": raw_value, "confidence": confidence}
+    return recovered
+
+
 async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str, None]:
     prompt = build_claude_prompt(raw_text, form_config)
     payload = {
         "model": "claude-sonnet-4-5",
-        "max_tokens": 4000,
+        # ✅ FIX 1: Increased from 4000 to 8000
+        # EL Baseline has 43 fields × ~50 tokens each (with confidence) = ~2150 tokens
+        # Plus prompt overhead. 8000 gives plenty of headroom for all forms.
+        "max_tokens": 8000,
         "stream": True,
         "messages": [{"role": "user", "content": prompt}]
     }
     full_response = ""
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             async with client.stream(
                 "POST",
                 "https://api.anthropic.com/v1/messages",
@@ -341,11 +365,19 @@ async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str,
         cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", cleaned)
         cleaned = re.sub(r"\n?```$", "", cleaned)
 
+    # ✅ FIX 2: Try full JSON parse first; fall back to partial recovery if truncated
+    raw_mapped = None
     try:
         raw_mapped = json.loads(cleaned)
     except json.JSONDecodeError:
-        yield f"data: {json.dumps({'error': 'AI returned malformed JSON. Please try again.'})}\n\n"
-        return
+        # Attempt to recover whatever fields were parsed before truncation
+        raw_mapped = recover_partial_json(cleaned)
+        if not raw_mapped:
+            # Nothing salvageable — genuinely malformed
+            yield f"data: {json.dumps({'error': 'AI response was cut short. Please try again — this usually resolves on retry.'})}\n\n"
+            return
+        # Partial recovery succeeded — continue with what we have
+        # Fields not in raw_mapped will appear as missing (red) in the review screen
 
     # ─────────────────────────────────────────────
     # Parse confidence scores from Claude's response
