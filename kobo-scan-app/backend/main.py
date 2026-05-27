@@ -203,7 +203,7 @@ Return a JSON object with kobo field names as keys and extracted values as value
         }
     }
 
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(gemini_url, json=gemini_payload)
