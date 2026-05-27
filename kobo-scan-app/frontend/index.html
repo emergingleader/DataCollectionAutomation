@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Emerging Leaders - Form Scanner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a365d;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header h1 { font-size: 17px; font-weight: 600; }
+    header p { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+    .logo {
+      width: 36px; height: 36px;
+      background: #3182ce;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+
+    main { padding: 20px; max-width: 640px; margin: 0 auto; }
+
+    /* ── STEP INDICATOR ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+      background: white;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .step {
+      display: flex; flex-direction: column; align-items: center;
+      flex: 1;
+    }
+
+    .step-circle {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #718096;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    .step.active .step-circle { background: #3182ce; color: white; }
+    .step.done .step-circle { background: #38a169; color: white; }
+    .step-label { font-size: 10px; color: #718096; margin-top: 4px; text-align: center; }
+    .step.active .step-label { color: #3182ce; font-weight: 600; }
+    .step.done .step-label { color: #38a169; }
+    .step-line { flex: 1; height: 2px; background: #e2e8f0; max-width: 32px; }
+    .step-line.done { background: #38a169; }
+
+    /* ── CARDS ── */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .card h2 { font-size: 17px; margin-bottom: 6px; color: #1a365d; }
+    .card p { font-size: 14px; color: #4a5568; line-height: 1.5; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed #bee3f8;
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #ebf8ff;
+      margin-top: 16px;
+    }
+
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: #3182ce;
+      background: #dbeafe;
+    }
+
+    .upload-zone .icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-zone h3 { font-size: 16px; color: #2b6cb0; margin-bottom: 6px; }
+    .upload-zone p { font-size: 13px; color: #4a5568; }
+
+    #file-input { display: none; }
+
+    /* ── PREVIEW IMAGE ── */
+    #image-preview {
+      display: none;
+      margin-top: 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #bee3f8;
+    }
+
+    #image-preview img {
+      width: 100%; display: block;
+    }
+
+    .preview-actions {
+      display: flex; gap: 8px;
+      padding: 10px;
+      background: #ebf8ff;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn-primary { background: #3182ce; color: white; }
+    .btn-primary:hover { background: #2c5282; }
+    .btn-primary:disabled { background: #90cdf4; cursor: not-allowed; }
+
+    .btn-success { background: #38a169; color: white; }
+    .btn-success:hover { background: #276749; }
+    .btn-success:disabled { background: #9ae6b4; cursor: not-allowed; }
+
+    .btn-outline {
+      background: white; color: #4a5568;
+      border: 2px solid #e2e8f0;
+    }
+    .btn-outline:hover { border-color: #3182ce; color: #3182ce; }
+
+    .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
+
+    /* ── LOADING ── */
+    .loading-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(26, 32, 64, 0.7);
+      z-index: 200;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+
+    .loading-overlay.show { display: flex; }
+
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay p { color: white; font-size: 15px; font-weight: 500; }
+
+    /* ── FIELD REVIEW ── */
+    .field-group {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0f4f8;
+    }
+
+    .field-group:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .field-label {
+      font-size: 12px; font-weight: 600; color: #718096;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .field-value-display {
+      font-size: 15px; color: #1a202c;
+      padding: 10px 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+      border-left: 3px solid #3182ce;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .field-value-display:hover { background: #ebf8ff; }
+    .field-value-display.empty {
+      color: #a0aec0;
+      border-left-color: #e2e8f0;
+      font-style: italic;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #3182ce;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .checkbox-group {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .checkbox-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .checkbox-item.checked {
+      border-color: #3182ce;
+      background: #ebf8ff;
+    }
+
+    .checkbox-item input[type=checkbox] {
+      width: 18px; height: 18px;
+      accent-color: #3182ce;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item label {
+      font-size: 14px; cursor: pointer;
+    }
+
+    /* ── ALERTS ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+
+    .alert-warning { background: #fefcbf; border: 1px solid #f6e05e; color: #744210; }
+    .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .alert-error { background: #fff5f5; border: 1px solid #fc8181; color: #742a2a; }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen {
+      text-align: center; padding: 40px 20px;
+    }
+
+    .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-screen h2 { font-size: 22px; color: #276749; margin-bottom: 8px; }
+    .success-screen p { font-size: 14px; color: #4a5568; margin-bottom: 24px; }
+    .submission-id {
+      background: #f0fff4; border: 1px solid #9ae6b4;
+      padding: 10px 16px; border-radius: 8px;
+      font-family: monospace; font-size: 14px; color: #276749;
+      margin-bottom: 24px;
+    }
+
+    /* ── HIDDEN ── */
+    .hidden { display: none !important; }
+
+    /* ── SECTION BADGE ── */
+    .section-badge {
+      display: inline-block;
+      background: #1a365d;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📋</div>
+  <div>
+    <h1>Form Scanner</h1>
+    <p>Emerging Leaders Baseline</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- Step Indicator -->
+  <div class="steps">
+    <div class="step active" id="step-1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Scan</div>
+    </div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step active" id="step-2-ind">
+      <div class="step-circle">2</div>
+      <div class="step-label">Extract</div>
+    </div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step" id="step-3-ind">
+      <div class="step-circle">3</div>
+      <div class="step-label">Review</div>
+    </div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step" id="step-4-ind">
+      <div class="step-circle">4</div>
+      <div class="step-label">Submit</div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 1: Upload ── -->
+  <div id="screen-upload">
+    <div class="card">
+      <h2>📸 Scan or Upload Form</h2>
+      <p>Take a clear photo of the completed paper form, or upload a scanned image.</p>
+
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📄</div>
+        <h3>Tap to take photo or upload</h3>
+        <p>JPG or PNG · Clear lighting · All text visible</p>
+      </div>
+
+      <input type="file" id="file-input" accept="image/*" capture="environment">
+
+      <div id="image-preview">
+        <img id="preview-img" src="" alt="Form preview">
+        <div class="preview-actions">
+          <button class="btn btn-outline btn-sm" onclick="resetUpload()">♻ Retake</button>
+          <button class="btn btn-primary btn-sm" id="extract-btn" onclick="extractFields()">🔍 Extract Fields →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💡 Tips for best results</h2>
+      <p style="margin-bottom:8px">✅ Good lighting — no shadows on text</p>
+      <p style="margin-bottom:8px">✅ Hold phone directly above form</p>
+      <p style="margin-bottom:8px">✅ All four edges of the form should be visible</p>
+      <p>✅ Ticks and writing should be clearly visible</p>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: Review ── -->
+  <div id="screen-review" class="hidden">
+    <div class="alert alert-warning">
+      ⚠️ <strong>Please review carefully.</strong> Check every field below before submitting. Tap any value to edit it.
+    </div>
+
+    <div id="review-fields"></div>
+
+    <div class="card" style="margin-top:16px">
+      <button class="btn btn-success" id="submit-btn" onclick="submitToKobo()">
+        ✅ Confirm & Submit to Kobo
+      </button>
+      <div style="margin-top:10px">
+        <button class="btn btn-outline" onclick="resetToUpload()">← Scan a Different Form</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 3: Success ── -->
+  <div id="screen-success" class="hidden">
+    <div class="card">
+      <div class="success-screen">
+        <div class="success-icon">✅</div>
+        <h2>Submitted Successfully!</h2>
+        <p>The form has been submitted to KoboToolbox.</p>
+        <div class="submission-id" id="submission-id-display"></div>
+        <button class="btn btn-primary" onclick="resetToUpload()">📸 Scan Another Form</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <p id="loading-text">Processing...</p>
+</div>
+
+<script>
+  // ── STATE ──
+  let currentMappedFields = {};
+  let formConfig = null;
+  let selectedFile = null;
+
+  // ── FILE SELECTION ──
+  document.getElementById('file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    selectedFile = file;
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      document.getElementById('preview-img').src = ev.target.result;
+      document.getElementById('image-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Drag and drop support
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      document.getElementById('file-input').files = e.dataTransfer.files;
+      document.getElementById('file-input').dispatchEvent(new Event('change'));
+    }
+  });
+
+  // ── STEP 1→2: EXTRACT FIELDS ──
+  async function extractFields() {
+    if (!selectedFile) return;
+
+    showLoading('Scanning form image...');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    let rawText;
+    try {
+      const extractResp = await fetch('/api/extract', { method: 'POST', body: formData });
+      const extractData = await extractResp.json();
+
+      if (!extractResp.ok) {
+        hideLoading();
+        showError(extractData.detail || 'OCR failed. Please try a clearer image.');
+        return;
+      }
+      rawText = extractData.raw_text;
+    } catch(err) {
+      hideLoading();
+      showError('Network error during OCR. Please check your connection.');
+      return;
+    }
+
+    updateLoading('Mapping fields with AI...');
+
+    try {
+      const mapResp = await fetch('/api/map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: rawText })
+      });
+      const mapData = await mapResp.json();
+
+      if (!mapResp.ok) {
+        hideLoading();
+        showError(mapData.detail || 'Field mapping failed. Please try again.');
+        return;
+      }
+
+      currentMappedFields = mapData.mapped_fields;
+      formConfig = mapData.form_config;
+
+      hideLoading();
+      renderReview();
+    } catch(err) {
+      hideLoading();
+      showError('Network error during field mapping.');
+    }
+  }
+
+  // ── RENDER REVIEW SCREEN ──
+  function renderReview() {
+    const container = document.getElementById('review-fields');
+    container.innerHTML = '';
+
+    // Section groupings
+    const sections = {
+      'Consent': ['Do_you_consent_to_sh_information_with_us','Do_you_consent_to_us_and_future_partners','We_would_love_to_fol_he_best_way_to_do_it'],
+      'Basic Information': ['Today_s_Date','First_Name','Last_Name','Your_Year_of_Birth','Your_Phone_Number','Age','Marital_Status','Gender','Do_you_have_a_form_of_disabili','If_yes_please_specify','Do_you_require_any_s_bigger_writings_etc','Your_area_of_residence','County'],
+      'Education': ['What_is_the_highest_tick_all_that_apply','Do_you_have_a_certif_of_education_reached'],
+      'Income': ['What_is_your_main_source_of_income','How_many_days_in_a_week_do_you_Work','What_is_the_frequenc_eceive_your_earnings','Approximately_how_mu_you_earn_in_a_month'],
+      'Savings & Borrowing': ['In_the_past_3_months_have_you','If_Yes_where_did_you_save_you','Specify','How_often_do_you_save_money','In_the_past_3_months_have_you_001','Specify_001','What_was_the_reason_for_borrow','Specify_002'],
+      'Wellbeing': ['Imagine_a_ladder_wit_Best_possible_life','On_which_step_do_you_Best_possible_life','When_you_face_difficult_situat','Specify_003'],
+      'Relationships & Work': ['Are_you_in_a_leadership_role_i','If_yes_where','What_do_you_consider_the_bigge','Specify_004','If_you_are_already_in_work_wh','Specify_005','What_kind_of_job_or_believed_in_yourself'],
+      'Training Info': ['Did_this_individual_V_Training_Sessions','If_yes_indicated_th_ended_eg_001_or_023']
+    };
+
+    formConfig.fields.forEach(field => {
+      // Find which section this field belongs to
+      let sectionName = null;
+      for (const [sec, names] of Object.entries(sections)) {
+        if (names.includes(field.kobo_name)) { sectionName = sec; break; }
+      }
+    });
+
+    let currentSection = null;
+    let sectionDiv = null;
+    let cardDiv = null;
+
+    for (const [secName, fieldNames] of Object.entries(sections)) {
+      const badge = document.createElement('div');
+      badge.className = 'section-badge';
+      badge.textContent = secName;
+
+      cardDiv = document.createElement('div');
+      cardDiv.className = 'card';
+      cardDiv.appendChild(badge);
+
+      fieldNames.forEach(fname => {
+        const fieldDef = formConfig.fields.find(f => f.kobo_name === fname);
+        if (!fieldDef) return;
+
+        const value = currentMappedFields[fname];
+        const group = createFieldGroup(fieldDef, value);
+        cardDiv.appendChild(group);
+      });
+
+      container.appendChild(cardDiv);
+    }
+
+    // Update step indicators
+    document.getElementById('step-3-ind').classList.add('active');
+    document.getElementById('line-2').classList.add('done');
+
+    showScreen('review');
+  }
+
+  // ── CREATE FIELD GROUP (editable) ──
+  function createFieldGroup(field, value) {
+    const group = document.createElement('div');
+    group.className = 'field-group';
+    group.dataset.fieldName = field.kobo_name;
+
+    const label = document.createElement('div');
+    label.className = 'field-label';
+    label.textContent = field.label;
+    group.appendChild(label);
+
+    if (field.type === 'select_multiple') {
+      const checkGroup = document.createElement('div');
+      checkGroup.className = 'checkbox-group';
+
+      const selectedValues = value ? String(value).split(' ') : [];
+
+      for (const [optKey, optLabel] of Object.entries(field.options)) {
+        const item = document.createElement('label');
+        item.className = 'checkbox-item' + (selectedValues.includes(optKey) ? ' checked' : '');
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = optKey;
+        cb.checked = selectedValues.includes(optKey);
+        cb.addEventListener('change', () => {
+          updateSelectMultiple(field.kobo_name);
+          item.classList.toggle('checked', cb.checked);
+        });
+
+        const lbl = document.createElement('span');
+        lbl.textContent = optLabel;
+
+        item.appendChild(cb);
+        item.appendChild(lbl);
+        checkGroup.appendChild(item);
+      }
+
+      group.appendChild(checkGroup);
+
+    } else {
+      // text / integer / date — show as editable display
+      const display = document.createElement('input');
+      display.className = 'field-input';
+      display.type = field.type === 'integer' ? 'number' : (field.type === 'date' ? 'date' : 'text');
+      display.value = value || '';
+      display.placeholder = value ? '' : '(not detected — enter manually)';
+      display.addEventListener('change', () => {
+        currentMappedFields[field.kobo_name] = display.value || null;
+      });
+      group.appendChild(display);
+    }
+
+    return group;
+  }
+
+  // ── UPDATE SELECT MULTIPLE VALUE ──
+  function updateSelectMultiple(fieldName) {
+    const group = document.querySelector(`[data-field-name="${fieldName}"]`);
+    if (!group) return;
+    const checked = Array.from(group.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+    currentMappedFields[fieldName] = checked.length > 0 ? checked.join(' ') : null;
+  }
+
+  // ── STEP 3→4: SUBMIT ──
+  async function submitToKobo() {
+    // Collect all current values from the review form
+    collectCurrentValues();
+
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    showLoading('Submitting to KoboToolbox...');
+
+    try {
+      const resp = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: currentMappedFields })
+      });
+      const data = await resp.json();
+
+      hideLoading();
+
+      if (!resp.ok) {
+        submitBtn.disabled = false;
+        showError(data.detail || 'Kobo submission failed. Please try again.');
+        return;
+      }
+
+      document.getElementById('submission-id-display').textContent =
+        'Submission ID: ' + (data.submission_id || 'Confirmed');
+
+      document.getElementById('step-4-ind').classList.add('done');
+      document.getElementById('line-3').classList.add('done');
+      showScreen('success');
+
+    } catch(err) {
+      hideLoading();
+      submitBtn.disabled = false;
+      showError('Network error during submission. Please check your connection.');
+    }
+  }
+
+  // ── COLLECT ALL CURRENT VALUES (text/integer/date fields) ──
+  function collectCurrentValues() {
+    document.querySelectorAll('.field-group').forEach(group => {
+      const fieldName = group.dataset.fieldName;
+      const input = group.querySelector('.field-input');
+      if (input) {
+        currentMappedFields[fieldName] = input.value || null;
+      }
+    });
+  }
+
+  // ── UI HELPERS ──
+  function showScreen(name) {
+    ['upload', 'review', 'success'].forEach(s => {
+      document.getElementById(`screen-${s}`).classList.toggle('hidden', s !== name);
+    });
+  }
+
+  function showLoading(text) {
+    document.getElementById('loading-text').textContent = text;
+    document.getElementById('loading').classList.add('show');
+  }
+
+  function updateLoading(text) {
+    document.getElementById('loading-text').textContent = text;
+  }
+
+  function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+  }
+
+  function showError(msg) {
+    const existing = document.querySelector('.alert-error');
+    if (existing) existing.remove();
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-error';
+    alert.innerHTML = `⚠️ ${msg}`;
+    document.getElementById('screen-upload').querySelector('.card').before(alert);
+    setTimeout(() => alert.remove(), 8000);
+  }
+
+  function resetUpload() {
+    document.getElementById('file-input').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+    selectedFile = null;
+  }
+
+  function resetToUpload() {
+    resetUpload();
+    currentMappedFields = {};
+    formConfig = null;
+    // Reset steps
+    ['step-2-ind','step-3-ind','step-4-ind'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('done');
+      if (id !== 'step-2-ind') el.classList.remove('active');
+    });
+    ['line-1','line-2','line-3'].forEach(id => document.getElementById(id).classList.remove('done'));
+    showScreen('upload');
+  }
+</script>
+</body>
+</html>

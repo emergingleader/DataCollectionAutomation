@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: kobo-scan-app
+    env: python
+    region: frankfurt  # Closest to Kenya/East Africa
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: KOBO_TOKEN
+        sync: false  # You set this in Render dashboard
+      - key: GOOGLE_VISION_API_KEY
+        sync: false  # You set this in Render dashboard

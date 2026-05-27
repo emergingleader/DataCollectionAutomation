@@ -1,0 +1,324 @@
+{
+  "asset_uid": "ajJDgMD5Fq9hLPDQnf7Y3T",
+  "form_title": "Emerging Leaders Baseline Survey",
+  "fields": [
+    {
+      "kobo_name": "Do_you_consent_to_sh_information_with_us",
+      "label": "Do you consent to sharing your information with us?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "option_2": "No"}
+    },
+    {
+      "kobo_name": "Do_you_consent_to_us_and_future_partners",
+      "label": "Do you consent to us sharing the summary report with current and future partners?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "option_2": "No"}
+    },
+    {
+      "kobo_name": "We_would_love_to_fol_he_best_way_to_do_it",
+      "label": "Best way to follow up after training",
+      "type": "select_multiple",
+      "options": {"yes": "Calls", "option_2": "Face to face", "both": "Both"}
+    },
+    {
+      "kobo_name": "Today_s_Date",
+      "label": "Today's Date",
+      "type": "date"
+    },
+    {
+      "kobo_name": "First_Name",
+      "label": "First Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Last_Name",
+      "label": "Last Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Your_Year_of_Birth",
+      "label": "Your Year of Birth",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Your_Phone_Number",
+      "label": "Your Phone Number",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Age",
+      "label": "Age",
+      "type": "select_multiple",
+      "options": {
+        "below_18_yrs": "Below 18 yrs",
+        "18__29": "18-29",
+        "30___35": "30-35",
+        "36___49": "36-49",
+        "50__years": "50+ years"
+      }
+    },
+    {
+      "kobo_name": "Marital_Status",
+      "label": "Marital Status",
+      "type": "select_multiple",
+      "options": {
+        "below_18_yrs": "Single",
+        "18__29": "Married",
+        "30___35": "Divorced",
+        "36___49": "Separated",
+        "50__years": "Widowed"
+      }
+    },
+    {
+      "kobo_name": "Gender",
+      "label": "Gender",
+      "type": "select_multiple",
+      "options": {
+        "below_18_yrs": "Male",
+        "18__29": "Female",
+        "50__years": "Prefer not to say"
+      }
+    },
+    {
+      "kobo_name": "Do_you_have_a_form_of_disabili",
+      "label": "Do you have a form of disability?",
+      "type": "select_multiple",
+      "options": {"below_18_yrs": "Yes", "18__29": "No"}
+    },
+    {
+      "kobo_name": "If_yes_please_specify",
+      "label": "If disability yes, please specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Do_you_require_any_s_bigger_writings_etc",
+      "label": "Do you require any special accommodation?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Your_area_of_residence",
+      "label": "Your area of residence",
+      "type": "text"
+    },
+    {
+      "kobo_name": "County",
+      "label": "County",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_is_the_highest_tick_all_that_apply",
+      "label": "Highest education completed",
+      "type": "select_multiple",
+      "options": {
+        "none": "None",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "university": "University",
+        "college_tvet": "College/TVET"
+      }
+    },
+    {
+      "kobo_name": "Do_you_have_a_certif_of_education_reached",
+      "label": "Do you have a certificate for highest education level?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "What_is_your_main_source_of_income",
+      "label": "What is your main source of income?",
+      "type": "select_multiple",
+      "options": {
+        "employed": "Employed",
+        "casual_worker": "Casual Worker",
+        "self_employed__or_you_own_your_own_busin": "Self-employed or own business",
+        "support_from_family_and_friends": "Support from family and friends",
+        "money_from_ngo_or_government": "Money from NGO or government",
+        "farming": "Farming",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "How_many_days_in_a_week_do_you_Work",
+      "label": "How many days in a week do you work?",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "What_is_the_frequenc_eceive_your_earnings",
+      "label": "Frequency of earnings",
+      "type": "select_multiple",
+      "options": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "irregular": "Irregular"
+      }
+    },
+    {
+      "kobo_name": "Approximately_how_mu_you_earn_in_a_month",
+      "label": "Approximate monthly earnings",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "In_the_past_3_months_have_you",
+      "label": "Have you saved money in the past 3 months?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_Yes_where_did_you_save_you",
+      "label": "Where did you save your money?",
+      "type": "select_multiple",
+      "options": {
+        "bank": "Bank",
+        "mobile_money_account": "Mobile money account",
+        "savings_group": "Savings group",
+        "at_home__cash_savings_": "At home (cash savings)",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify",
+      "label": "Savings other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "How_often_do_you_save_money",
+      "label": "How often do you save money?",
+      "type": "select_multiple",
+      "options": {
+        "always": "Always",
+        "sometimes": "Sometimes",
+        "rarely": "Rarely",
+        "never": "Never"
+      }
+    },
+    {
+      "kobo_name": "In_the_past_3_months_have_you_001",
+      "label": "Borrowed money from which sources in past 3 months?",
+      "type": "select_multiple",
+      "options": {
+        "bank_or_financial_institution": "Bank or financial institution",
+        "family_or_friends": "Family or friends",
+        "mobile_lending_platforms": "Mobile lending platforms",
+        "informal_lender": "Informal lender",
+        "savings_group": "Savings group",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify_001",
+      "label": "Borrowing other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_was_the_reason_for_borrow",
+      "label": "Reason for borrowing",
+      "type": "select_multiple",
+      "options": {
+        "business_or_entrepreneurship": "Business or entrepreneurship",
+        "education": "Education",
+        "health_expenses": "Health expenses",
+        "household_expenses": "Household expenses",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify_002",
+      "label": "Borrowing reason other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Imagine_a_ladder_wit_Best_possible_life",
+      "label": "Wellbeing ladder score - current (0-10)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "On_which_step_do_you_Best_possible_life",
+      "label": "Wellbeing ladder score - 5 years from now (0-10)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "When_you_face_difficult_situat",
+      "label": "How do you cope with difficult situations?",
+      "type": "select_multiple",
+      "options": {
+        "talk_to_someone__family__frien": "Talk to someone",
+        "try_to_find_extra_work_or_hust": "Try to find extra work or hustle",
+        "pray_or_engage_in_religious_ac": "Pray or engage in religious activities",
+        "use_alcohol_or_drugs": "Use alcohol or drugs",
+        "avoid_the_problem__e_g__avoidi": "Avoid the problem",
+        "exercise__running__walking__gy": "Exercise",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify_003",
+      "label": "Coping other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Are_you_in_a_leadership_role_i",
+      "label": "Are you in a leadership role in your community?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_yes_where",
+      "label": "Leadership role - where?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_do_you_consider_the_bigge",
+      "label": "Biggest barriers to finding a job or starting a business",
+      "type": "select_multiple",
+      "options": {
+        "already_in_a_job_business": "Already in a job/business",
+        "lack_of_job_opportunities": "Lack of job opportunities",
+        "lack_of_skills_or_education": "Lack of skills or education",
+        "lack_of_financial_resources": "Lack of financial resources",
+        "lack_of_mentorship_or_guidance": "Lack of mentorship or guidance",
+        "personal_or_family_responsibil": "Personal or family responsibilities",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify_004",
+      "label": "Job barriers other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "If_you_are_already_in_work_wh",
+      "label": "Biggest barriers to growing in your current job or business",
+      "type": "select_multiple",
+      "options": {
+        "lack_of_job_opportunities": "Lack of growth opportunities",
+        "lack_of_skills_or_education": "Lack of skills or education",
+        "lack_of_financial_resources": "Lack of financial resources",
+        "lack_of_mentorship_or_guidance": "Lack of mentorship or guidance",
+        "personal_or_family_responsibil": "Personal or family responsibilities",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Specify_005",
+      "label": "Growth barriers other - specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_kind_of_job_or_believed_in_yourself",
+      "label": "What job or business would you like in the next one year?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Did_this_individual_V_Training_Sessions",
+      "label": "Did this individual attend any UKV+ Training Sessions?",
+      "type": "select_multiple",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_yes_indicated_th_ended_eg_001_or_023",
+      "label": "UKV+ class number attended",
+      "type": "integer"
+    }
+  ]
+}
