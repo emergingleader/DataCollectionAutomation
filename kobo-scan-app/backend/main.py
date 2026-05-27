@@ -193,8 +193,6 @@ Return a JSON object with kobo field names as keys and extracted values as value
     if not gemini_key:
         raise HTTPException(status_code=500, detail="Gemini API key not configured. Add GEMINI_API_KEY to environment variables.")
 
-    gemini_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={gemini_key}"
-
     gemini_payload = {
         "contents": [{
             "parts": [{"text": prompt}]
@@ -205,13 +203,15 @@ Return a JSON object with kobo field names as keys and extracted values as value
         }
     }
 
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(gemini_url, json=gemini_payload)
 
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"AI mapping error: {response.text}"
+            detail=f"Gemini API error: {response.text}"
         )
 
     ai_response = response.json()
