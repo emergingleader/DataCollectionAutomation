@@ -72,11 +72,13 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-overlay p { color: white; font-size: 15px; font-weight: 500; text-align: center; padding: 0 20px; }
 
-    .field-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f0f4f8; }
-    .field-group:last-child { border-bottom: none; margin-bottom: 0; }
-    .field-label { font-size: 12px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .field-label.missing { color: #e53e3e; }
-    .field-input { width: 100%; padding: 10px 12px; border: 2px solid #3182ce; border-radius: 8px; font-size: 15px; outline: none; }
+    .field-group { margin-bottom: 16px; padding: 14px 16px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; }
+    .field-group:last-child { margin-bottom: 0; }
+    .field-group.flagged { border-color: #fc8181; background: #fff5f5; }
+    .field-label { font-size: 12px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .field-label.missing { color: #c53030; }
+    .field-label.low-conf { color: #c05621; }
+    .field-input { width: 100%; padding: 10px 12px; border: 2px solid #3182ce; border-radius: 8px; font-size: 15px; outline: none; background: white; }
     .field-input.empty { border-color: #fc8181; background: #fff5f5; }
     .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
     .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
@@ -104,16 +106,7 @@
     .capture-stat.warn .num { color: #dd6b20; }
 
     /* SMART REVIEW — confidence-based */
-    .auto-accepted-card { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
-    .auto-accepted-card summary { font-size: 13px; font-weight: 700; color: #276749; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
-    .auto-accepted-card summary::after { content: '▼'; font-size: 11px; transition: transform 0.2s; }
-    .auto-accepted-card[open] summary::after { transform: rotate(180deg); }
-    .accepted-field-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-    .accepted-field-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #c6f6d5; }
-    .accepted-field-item:last-child { border-bottom: none; }
-    .accepted-field-label { color: #276749; font-weight: 500; flex: 1; }
-    .accepted-field-value { color: #1a365d; font-weight: 600; text-align: right; max-width: 55%; word-break: break-word; }
-    .needs-review-banner { background: #fff5f5; border: 1px solid #fc8181; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #742a2a; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
 
     .success-screen { text-align: center; padding: 40px 20px; }
     .success-icon { font-size: 64px; margin-bottom: 16px; }
@@ -558,25 +551,28 @@
   }
 
   // ── RENDER REVIEW SCREEN ──
+  // ALL fields shown — every field is editable, nothing hidden
+  // Low-confidence and missing fields highlighted in red so they stand out
   function renderReview() {
     const container = document.getElementById('review-fields');
     container.innerHTML = '';
 
-    // Split into auto-accepted (high confidence) and needs-review (low/missing)
-    const autoAccepted = fieldReview.filter(f => !f.needs_review && f.value !== null && f.value !== undefined);
-    const needsReview  = fieldReview.filter(f => f.needs_review || f.value === null || f.value === undefined);
-    const total = fieldReview.length;
+    const total     = fieldReview.length;
+    const captured  = fieldReview.filter(f => f.captured).length;
+    const lowConf   = fieldReview.filter(f => f.captured && f.confidence === 'low').length;
+    const missing   = fieldReview.filter(f => !f.captured).length;
+    const flagged   = lowConf + missing;
 
-    // ── Summary stats ──
+    // ── Summary bar ──
     const summaryEl = document.getElementById('capture-summary');
     summaryEl.innerHTML = `
       <div class="capture-stat good">
-        <div class="num">${autoAccepted.length}</div>
-        <div class="lbl">Auto-accepted ✅</div>
+        <div class="num">${captured}</div>
+        <div class="lbl">Detected</div>
       </div>
-      <div class="capture-stat ${needsReview.length > 0 ? 'warn' : 'good'}">
-        <div class="num">${needsReview.length}</div>
-        <div class="lbl">Need review ⚠️</div>
+      <div class="capture-stat ${flagged > 0 ? 'warn' : 'good'}">
+        <div class="num">${flagged}</div>
+        <div class="lbl">Check these ⚠️</div>
       </div>
       <div class="capture-stat">
         <div class="num">${total}</div>
@@ -584,61 +580,22 @@
       </div>
     `;
 
-    // ── Fields needing review — shown expanded at the top ──
-    if (needsReview.length > 0) {
-      const banner = document.createElement('div');
-      banner.className = 'needs-review-banner';
-      banner.innerHTML = `⚠️ ${needsReview.length} field${needsReview.length > 1 ? 's' : ''} need your attention — please check and correct before submitting.`;
-      container.appendChild(banner);
-
-      const reviewCard = document.createElement('div');
-      reviewCard.className = 'card';
-      needsReview.forEach(f => reviewCard.appendChild(createFieldGroup(f, f.value)));
-      container.appendChild(reviewCard);
+    // ── Instruction banner ──
+    const banner = document.createElement('div');
+    if (flagged > 0) {
+      banner.className = 'alert alert-warning';
+      banner.innerHTML = `⚠️ <strong>${flagged} field${flagged > 1 ? 's' : ''} flagged</strong> (red border) — check them carefully. All other fields are shown below — correct anything that looks wrong before submitting.`;
+    } else {
+      banner.className = 'alert alert-success';
+      banner.innerHTML = `✅ <strong>All ${total} fields detected.</strong> Scroll through and correct anything that looks wrong, then submit.`;
     }
+    container.appendChild(banner);
 
-    // ── Auto-accepted fields — shown collapsed in a green summary ──
-    if (autoAccepted.length > 0) {
-      const details = document.createElement('details');
-      details.className = 'auto-accepted-card';
-      if (needsReview.length === 0) details.open = true; // Open if nothing to review
-
-      const summary = document.createElement('summary');
-      summary.innerHTML = `✅ ${autoAccepted.length} fields auto-accepted (high confidence) — tap to review`;
-      details.appendChild(summary);
-
-      const list = document.createElement('div');
-      list.className = 'accepted-field-list';
-      autoAccepted.forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'accepted-field-item';
-        item.dataset.fieldName = f.kobo_name;
-
-        // Display value — for options show the label not the key
-        let displayValue = f.value;
-        if (f.options && f.value) {
-          const keys = String(f.value).split(' ');
-          const labels = keys.map(k => f.options[k] || k);
-          displayValue = labels.join(', ');
-        }
-
-        item.innerHTML = `
-          <span class="accepted-field-label">${f.label}</span>
-          <span class="accepted-field-value">${displayValue || '—'}</span>
-        `;
-        list.appendChild(item);
-      });
-      details.appendChild(list);
-      container.appendChild(details);
-    }
-
-    // If everything was auto-accepted with no review needed
-    if (needsReview.length === 0) {
-      const allGoodBanner = document.createElement('div');
-      allGoodBanner.className = 'alert alert-success';
-      allGoodBanner.innerHTML = '✅ <strong>All fields detected with high confidence.</strong> Review the summary above and submit when ready.';
-      container.insertBefore(allGoodBanner, container.firstChild);
-    }
+    // ── ALL fields in one card — flagged ones highlighted ──
+    const card = document.createElement('div');
+    card.className = 'card';
+    fieldReview.forEach(f => card.appendChild(createFieldGroup(f, f.value)));
+    container.appendChild(card);
 
     document.getElementById('step-3-ind').classList.add('active');
     document.getElementById('line-2').classList.add('done');
@@ -647,14 +604,26 @@
   }
 
   // ── CREATE EDITABLE FIELD GROUP ──
+  // Every field is fully editable.
+  // Red border = missing or low-confidence (needs extra attention).
+  // Green border = high-confidence captured field.
   function createFieldGroup(field, value) {
+    const isFlagged = !field.captured || field.confidence === 'low';
     const group = document.createElement('div');
-    group.className = 'field-group';
+    group.className = 'field-group' + (isFlagged ? ' flagged' : '');
     group.dataset.fieldName = field.kobo_name;
 
     const label = document.createElement('div');
-    label.className = 'field-label' + (!field.captured ? ' missing' : '');
-    label.textContent = field.label + (!field.captured ? ' ⚠ NOT DETECTED' : '');
+    if (!field.captured) {
+      label.className = 'field-label missing';
+      label.textContent = field.label + ' ⚠ NOT DETECTED — enter manually';
+    } else if (field.confidence === 'low') {
+      label.className = 'field-label low-conf';
+      label.textContent = field.label + ' ⚠ CHECK — low confidence';
+    } else {
+      label.className = 'field-label';
+      label.textContent = field.label;
+    }
     group.appendChild(label);
 
     if (field.type === 'select_multiple') {
