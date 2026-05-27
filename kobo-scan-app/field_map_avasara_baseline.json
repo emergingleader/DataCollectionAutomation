@@ -1,0 +1,196 @@
+{
+  "asset_uid": "aKznsnEDjHBCizzxgsUs4n",
+  "form_title": "Avasara Student Baseline",
+  "fields": [
+    {
+      "kobo_name": "consent_data",
+      "label": "Do you agree to sharing your information with us?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "consent_report",
+      "label": "Do you consent to us sharing the summary report with current and future partners?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "first_name",
+      "label": "First Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "last_name",
+      "label": "Last Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "age",
+      "label": "Age",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "class_grade",
+      "label": "Class / Grade",
+      "type": "text"
+    },
+    {
+      "kobo_name": "p1_q1",
+      "label": "PART 1: I believe I can shape how my life turns out",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p1_q2",
+      "label": "PART 1: I can find a way forward when things are difficult",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p1_q3",
+      "label": "PART 1: I can choose how I respond to situations",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p1_q4",
+      "label": "PART 1: I see myself as someone who can lead (even without a title)",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p1_q5",
+      "label": "PART 1: I can turn my ideas into action",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p1_q6",
+      "label": "PART 1: I have a clear goal or something I am working towards",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "p2_q6",
+      "label": "PART 2: I share my ideas in a group",
+      "type": "select_one",
+      "options": {
+        "never": "Never",
+        "rarely": "Rarely",
+        "sometimes": "Sometimes",
+        "often": "Often",
+        "very_often": "Very Often"
+      }
+    },
+    {
+      "kobo_name": "p2_q7",
+      "label": "PART 2: I take initiative when something needs to be done",
+      "type": "select_one",
+      "options": {
+        "never": "Never",
+        "rarely": "Rarely",
+        "sometimes": "Sometimes",
+        "often": "Often",
+        "very_often": "Very Often"
+      }
+    },
+    {
+      "kobo_name": "p2_q8",
+      "label": "PART 2: I encourage others when they struggle",
+      "type": "select_one",
+      "options": {
+        "never": "Never",
+        "rarely": "Rarely",
+        "sometimes": "Sometimes",
+        "often": "Often",
+        "very_often": "Very Often"
+      }
+    },
+    {
+      "kobo_name": "p2_q9",
+      "label": "PART 2: I help a group stay focused on a goal",
+      "type": "select_one",
+      "options": {
+        "never": "Never",
+        "rarely": "Rarely",
+        "sometimes": "Sometimes",
+        "often": "Often",
+        "very_often": "Very Often"
+      }
+    },
+    {
+      "kobo_name": "p3_q12",
+      "label": "PART 3: When something does not work, I usually:",
+      "type": "select_one",
+      "options": {
+        "try_again": "Try again",
+        "try_different": "Try a different way",
+        "ask_help": "Ask for help",
+        "give_up": "Give up"
+      }
+    },
+    {
+      "kobo_name": "p3_q13",
+      "label": "PART 3: When I fail, I feel:",
+      "type": "select_one",
+      "options": {
+        "motivated": "Motivated to improve",
+        "bit_discouraged": "A bit discouraged but I try again",
+        "very_discouraged": "Very discouraged",
+        "giving_up": "Like giving up"
+      }
+    },
+    {
+      "kobo_name": "p4_q14",
+      "label": "PART 4: When you face an important decision, what best describes how you usually go about it?",
+      "type": "select_one",
+      "options": {
+        "think_self": "I think it through myself and decide on my own",
+        "listen_others": "I listen to others, but the final decision is mine",
+        "follow_trusted": "I usually follow what family or people I trust suggest",
+        "havent_decided": "I haven't had to make many big decisions yet"
+      }
+    },
+    {
+      "kobo_name": "p4_q15",
+      "label": "PART 4: What is one challenge you are currently facing?",
+      "type": "text"
+    }
+  ]
+}
