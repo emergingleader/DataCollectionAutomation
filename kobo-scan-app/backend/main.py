@@ -193,7 +193,7 @@ Return a JSON object with kobo field names as keys and extracted values as value
     if not gemini_key:
         raise HTTPException(status_code=500, detail="Gemini API key not configured. Add GEMINI_API_KEY to environment variables.")
 
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
 
     gemini_payload = {
         "contents": [{
