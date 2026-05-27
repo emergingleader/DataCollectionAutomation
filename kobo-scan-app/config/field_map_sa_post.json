@@ -1,0 +1,147 @@
+{
+  "asset_uid": "aEjAgvohN94o2gU5kMMWdo",
+  "form_title": "Pietermaritzburg Post-Assessment Questionnaire",
+  "fields": [
+    {
+      "kobo_name": "Do_you_consent_to_sh_information_with_us",
+      "label": "Do you consent to sharing your information with us?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "First_Name",
+      "label": "First Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Last_Name",
+      "label": "Last Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Primary_phone_number",
+      "label": "Primary Phone Number",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Additional_phone_number_If_any",
+      "label": "Additional Phone Number (If any)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Area_trained",
+      "label": "Area Trained",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Right_now_who_do_yo_d_decisions_you_make",
+      "label": "Right now, who do you feel should mostly influence the choices and decisions you make?",
+      "type": "select_one",
+      "options": {
+        "i_am___i_will_make_choices_that_shape_my": "I am - I will make choices that shape my future",
+        "a_mix___sometimes_me__sometimes_others": "A mix - sometimes me, sometimes others",
+        "mostly_others__family__friends__circumst": "Mostly others (family, friends, circumstances)",
+        "i_haven_t_thought_about_it_much": "I haven't thought about it much"
+      }
+    },
+    {
+      "kobo_name": "Currently_which_of_he_one_most_like_you",
+      "label": "Currently, which thought feels most familiar to you?",
+      "type": "select_one",
+      "options": {
+        "_i_can__i_will__i_ll_find_a_way": "I can, I will, I'll find a way",
+        "_that_s_just_the_way_i_am": "That's just the way I am",
+        "_nothing_ever_works_out_for_me": "Nothing ever works out for me",
+        "_i_ll_wait_for_others_to_sort_it_out": "I'll wait for others to sort it out"
+      }
+    },
+    {
+      "kobo_name": "When_I_have_an_idea_into_something_real",
+      "label": "When I have an idea, I believe I can turn it into something real",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "option_5": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "When_things_go_wrong_I_can_find_a_way_out",
+      "label": "When things go wrong, I believe I can find a way out",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neutral": "Neutral",
+        "agree": "Agree",
+        "option_5": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "Currently_have_you_r_goals_for_yourself",
+      "label": "Currently, have you set any clear goals for yourself?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "Now_that_you_have_fi_with_you_from_today",
+      "label": "Which new thought/leadership mindset do you want to carry with you from today?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Name_one_poverty_tho_u_have_been_carrying",
+      "label": "Name one poverty thought/mindset you feel you have been carrying",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_will_you_replace_it_with",
+      "label": "What will you replace it with?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_is_one_obstacle_u_from_taking_action",
+      "label": "What is one obstacle you feel might stop you from taking action?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Are_you_confident_yo_able_to_overcome_it",
+      "label": "Are you confident you will be able to overcome it?",
+      "type": "select_one",
+      "options": {
+        "yes__i_am_very_confident": "Yes, I am very confident",
+        "i_am_confident": "I am confident",
+        "maybe__i_might_or_not_overcome": "Maybe, I might or not overcome",
+        "no___i_don_t_think_i_will_be_able": "No - I don't think I will be able"
+      }
+    },
+    {
+      "kobo_name": "What_is_the_most_imp_ully_believed_before",
+      "label": "What is the most important thing you now believe about yourself that you may not have fully believed before?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_is_one_thing_yo_with_family_friends",
+      "label": "What is one thing you are going to share with family/friends?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "On_a_scale_of_1_5_h_alues_and_decisions",
+      "label": "On a scale of 1-5, how much did this training help you think differently about yourself, values, and decisions?",
+      "type": "select_one",
+      "options": {
+        "5___i_felt_very_huge_change": "5 - I felt very huge change",
+        "4___a_lot_shifted": "4 - A lot shifted",
+        "3___some_things_moved": "3 - Some things moved",
+        "2___a_little_bit": "2 - A little bit",
+        "1___not_much_changed": "1 - Not much changed"
+      }
+    },
+    {
+      "kobo_name": "What_did_you_like_mo_t_about_the_training",
+      "label": "What did you like most about the training?",
+      "type": "text"
+    }
+  ]
+}

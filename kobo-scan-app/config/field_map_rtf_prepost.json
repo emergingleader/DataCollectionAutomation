@@ -1,0 +1,268 @@
+{
+  "asset_uid": "a5R353YNFUdTj6WKRG97Uv",
+  "form_title": "RTF Pre/Post Assessments",
+  "fields": [
+    {
+      "kobo_name": "Country",
+      "label": "Country",
+      "type": "select_one",
+      "options": {
+        "colombia": "Colombia",
+        "kenya": "Kenya",
+        "south_africa": "South Africa",
+        "india": "India"
+      }
+    },
+    {
+      "kobo_name": "First_Name",
+      "label": "First Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Last_Name",
+      "label": "Last Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Phone_Number",
+      "label": "Primary Phone Number",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Phone_Number_2",
+      "label": "Additional Phone Number (if any)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Area_Trained",
+      "label": "Area Trained",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Which_assessment_are_you_filli",
+      "label": "Which assessment are you filling in?",
+      "type": "select_one",
+      "options": {
+        "pre_assessment__at_start_of_tr": "Pre-Assessment (At start of Training - Day 1)",
+        "post_assessment__at_end_of_the": "Post-Assessment (At end of the Training - Day 3)",
+        "both": "Both"
+      }
+    },
+    {
+      "kobo_name": "_1_I_can_achieve_mos_hat_I_set_for_myself",
+      "label": "PRE: 1. I can achieve most of the goals that I set for myself",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_2_When_things_go_wr_confidence_in_myself",
+      "label": "PRE: 2. When things go wrong, I quickly lose confidence in myself",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_3_If_I_work_hard_en_improve_my_situation",
+      "label": "PRE: 3. If I work hard enough, I can improve my situation",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_4_No_matter_what_I_luck_or_other_people",
+      "label": "PRE: 4. No matter what I do, my life is controlled by luck or other people",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_5_I_tend_to_bounce_ter_a_difficult_time",
+      "label": "PRE: 5. I tend to bounce back quickly after a difficult time",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_6_I_find_it_hard_to_omething_bad_happens",
+      "label": "PRE: 6. I find it hard to get back on track after something bad happens",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_7_My_voice_or_actio_ence_in_my_community",
+      "label": "PRE: 7. My voice or actions can make a difference in my community",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_8_I_feel_hopeful_ab_myself_and_my_family",
+      "label": "PRE: 8. I feel hopeful about the future for myself and my family",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_9_Overall_I_am_sat_th_my_life_right_now",
+      "label": "PRE: 9. Overall, I am satisfied with my life right now",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_1_I_can_achieve_mos_hat_I_set_for_myself_001",
+      "label": "POST: 1. I can achieve most of the goals that I set for myself",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_2_When_things_go_wr_confidence_in_myself_001",
+      "label": "POST: 2. When things go wrong, I quickly lose confidence in myself",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_3_If_I_work_hard_en_improve_my_situation_001",
+      "label": "POST: 3. If I work hard enough, I can improve my situation",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_4_No_matter_what_I_luck_or_other_people_001",
+      "label": "POST: 4. No matter what I do, my life is controlled by luck or other people",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_5_I_tend_to_bounce_ter_a_difficult_time_001",
+      "label": "POST: 5. I tend to bounce back quickly after a difficult time",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_6_I_find_it_hard_to_omething_bad_happens_001",
+      "label": "POST: 6. I find it hard to get back on track after something bad happens",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_7_My_voice_or_actio_ence_in_my_community_001",
+      "label": "POST: 7. My voice or actions can make a difference in my community",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_8_I_feel_hopeful_ab_myself_and_my_family_001",
+      "label": "POST: 8. I feel hopeful about the future for myself and my family",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    },
+    {
+      "kobo_name": "_9_Overall_I_am_sat_th_my_life_right_now_001",
+      "label": "POST: 9. Overall, I am satisfied with my life right now",
+      "type": "select_one",
+      "options": {
+        "strongly_disagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "neither": "Neither",
+        "agree": "Agree",
+        "strongly_agree": "Strongly Agree"
+      }
+    }
+  ]
+}

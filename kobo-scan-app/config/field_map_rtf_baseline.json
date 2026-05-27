@@ -1,0 +1,284 @@
+{
+  "asset_uid": "akWVj2zqrsjSihgY2f2JsF",
+  "form_title": "RTF Baseline Survey",
+  "fields": [
+    {
+      "kobo_name": "Do_you_consent_to_sh_information_with_us",
+      "label": "Do you consent to sharing your information with us?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "Do_you_consent_to_us_and_future_partners",
+      "label": "Do you consent to us sharing the summary report with current and future partners?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "Can_we_contact_you_t_p_after_the_training",
+      "label": "Can we contact you to follow up after the training?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "pa_s",
+      "label": "Country",
+      "type": "select_one",
+      "options": {
+        "columbia": "Colombia",
+        "south_africa": "South Africa",
+        "india": "India",
+        "kenya": "Kenya"
+      }
+    },
+    {
+      "kobo_name": "Today_s_Date",
+      "label": "Today's Date",
+      "type": "date"
+    },
+    {
+      "kobo_name": "First_Name",
+      "label": "First Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Last_Name",
+      "label": "Last Name",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Your_Phone_Number",
+      "label": "Primary Phone Number",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Additional_Phone_Number_If_Any",
+      "label": "Additional Phone Number (If Any)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Area_of_Training",
+      "label": "Area of Training",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Age_group",
+      "label": "Age Group",
+      "type": "select_one",
+      "options": {
+        "below_18_yrs": "Below 18 yrs",
+        "18__29": "18-29",
+        "30___35": "30-35",
+        "36___49": "36-49",
+        "50__years": "50+ years"
+      }
+    },
+    {
+      "kobo_name": "Your_Year_of_Birth",
+      "label": "Your Year of Birth",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Gender",
+      "label": "Gender",
+      "type": "select_one",
+      "options": {
+        "female": "Female",
+        "male": "Male",
+        "prefer_not_to_say": "Prefer not to say"
+      }
+    },
+    {
+      "kobo_name": "Marital_Status",
+      "label": "Marital Status",
+      "type": "select_one",
+      "options": {
+        "single": "Single",
+        "married": "Married",
+        "divorced": "Divorced/Separated",
+        "widowed": "Widowed"
+      }
+    },
+    {
+      "kobo_name": "Do_you_have_physical_disabilit",
+      "label": "Do you have a physical disability or impairment?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_yes_specify_the_type_of_Disability",
+      "label": "If disability yes, please specify type",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_is_the_highest_ompleted_Select_One",
+      "label": "Highest education level completed",
+      "type": "select_one",
+      "options": {
+        "none": "None",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "college_tvet": "College/TVET",
+        "university": "University"
+      }
+    },
+    {
+      "kobo_name": "Are_you_currently_involved_in_",
+      "label": "Are you currently involved in any volunteer group or community project?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_yes_what_is_it_about",
+      "label": "If yes, what is it about?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Are_you_in_a_leadership_role_i",
+      "label": "Are you in a leadership position in any group or organization in your community?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "If_yes_where",
+      "label": "Leadership role - where?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "Did_you_have_clear_g_fore_today_s_session",
+      "label": "Did you have clear goals before today's session?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "What_are_all_your_current_sour",
+      "label": "What are all your current sources of income?",
+      "type": "select_multiple",
+      "options": {
+        "employed": "Employed",
+        "self_employed__business": "Self-employed (business)",
+        "casual_work": "Casual Work",
+        "farming_agriculture": "Farming/Agriculture",
+        "support_from_family_friends": "Support from family/friends",
+        "money_from_ngo_govt": "Money from NGO/Govt",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Other_Specify_002",
+      "label": "Income source - other specify",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_is_your_main_source_of_in_001",
+      "label": "Primary source of income",
+      "type": "select_one",
+      "options": {
+        "employed": "Employed",
+        "self_employed__business": "Self-employed (business)",
+        "casual_work": "Casual Work",
+        "farming_agriculture": "Farming/Agriculture",
+        "support_from_family_friends": "Support from family/friends",
+        "money_from_ngo_govt": "Money from NGO/Govt",
+        "other": "Other"
+      }
+    },
+    {
+      "kobo_name": "Approximately_how_mu_your_income_sources",
+      "label": "Approximate monthly earnings (KES)",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "On_average_how_many_per_week_do_you_work",
+      "label": "On average, how many days per week do you work?",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "How_regular_is_your_income",
+      "label": "How regular is your income?",
+      "type": "select_one",
+      "options": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "irregular": "Irregular"
+      }
+    },
+    {
+      "kobo_name": "On_a_scale_how_sati_do_to_earn_an_income",
+      "label": "How satisfied are you with the work you do to earn income?",
+      "type": "select_one",
+      "options": {
+        "not_satisfied_at_all": "Not satisfied at all",
+        "slightly": "Slightly",
+        "neutral": "Neutral",
+        "satisfied": "Satisfied",
+        "very_satisfied": "Very Satisfied"
+      }
+    },
+    {
+      "kobo_name": "On_a_scale_how_well_budgeting_and_saving",
+      "label": "How well do you understand budgeting and saving?",
+      "type": "select_one",
+      "options": {
+        "i_don_t_know_anything": "I don't know anything",
+        "i_understand_the_basics": "I understand the basics",
+        "i_understand_enough": "I understand enough",
+        "i_understand_a_lot": "I understand a lot"
+      }
+    },
+    {
+      "kobo_name": "Do_you_save_money",
+      "label": "Do you save money?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "How_often_do_you_save",
+      "label": "How often do you save?",
+      "type": "select_one",
+      "options": {
+        "always": "Always",
+        "sometimes": "Sometimes",
+        "rarely": "Rarely",
+        "never": "Never"
+      }
+    },
+    {
+      "kobo_name": "Approximately_how_m_you_save_in_a_month",
+      "label": "Approximately how much do you save in a month?",
+      "type": "integer"
+    },
+    {
+      "kobo_name": "Do_you_currently_bud_track_your_expenses",
+      "label": "Do you currently budget or track your expenses?",
+      "type": "select_one",
+      "options": {"yes": "Yes", "no": "No"}
+    },
+    {
+      "kobo_name": "In_the_past_6_months_you_have_been_facing",
+      "label": "In the past 6 months, what challenges have you been facing?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "When_faced_with_a_ch_at_do_you_usually_do",
+      "label": "When faced with a challenge or setback, what do you usually do?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_do_you_hope_to_n_from_this_training",
+      "label": "What do you hope to gain from this training?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "What_was_your_key_ta_y_in_today_s_session",
+      "label": "What was your key takeaway in today's session?",
+      "type": "text"
+    },
+    {
+      "kobo_name": "In_your_own_words_w_u_and_your_community",
+      "label": "What would 'living a better life' mean for you and your community?",
+      "type": "text"
+    }
+  ]
+}
