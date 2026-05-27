@@ -37,6 +37,7 @@ with open(CONFIG_PATH) as f:
 
 KOBO_TOKEN = os.getenv("KOBO_TOKEN")
 GOOGLE_VISION_API_KEY = os.getenv("GOOGLE_VISION_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 KOBO_BASE_URL = "https://kf.kobotoolbox.org/api/v2"
 
 
@@ -45,18 +46,24 @@ KOBO_BASE_URL = "https://kf.kobotoolbox.org/api/v2"
 # ─────────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok", "form": FORM_CONFIG["form_title"]}
+    return {
+        "status": "ok",
+        "form": FORM_CONFIG["form_title"],
+        "kobo_token": "set" if KOBO_TOKEN else "MISSING",
+        "vision_key": "set" if GOOGLE_VISION_API_KEY else "MISSING",
+        "anthropic_key": "set" if ANTHROPIC_API_KEY else "MISSING"
+    }
 
 
 # ─────────────────────────────────────────────
-# HELPER: OCR one image → raw text string
+# HELPER: OCR one image → raw text
 # ─────────────────────────────────────────────
 async def ocr_single_image(contents: bytes, page_label: str = "") -> str:
     try:
         img = Image.open(io.BytesIO(contents))
         img.verify()
     except Exception:
-        raise HTTPException(status_code=400, detail=f"Invalid image file{' (' + page_label + ')' if page_label else ''}. Please upload JPG or PNG files only.")
+        raise HTTPException(status_code=400, detail=f"Invalid image file{' (' + page_label + ')' if page_label else ''}.")
 
     img = Image.open(io.BytesIO(contents))
     max_dim = 4000
@@ -79,10 +86,7 @@ async def ocr_single_image(contents: bytes, page_label: str = "") -> str:
         response = await client.post(vision_url, json=payload)
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Google Vision API error: {response.text}"
-        )
+        raise HTTPException(status_code=502, detail=f"Google Vision API error: {response.text}")
 
     vision_data = response.json()
     try:
@@ -96,17 +100,10 @@ async def ocr_single_image(contents: bytes, page_label: str = "") -> str:
 # ─────────────────────────────────────────────
 @app.post("/api/extract")
 async def extract_from_images(files: List[UploadFile] = File(...)):
-    """
-    Accepts 1 or more page images for the same participant.
-    OCRs each page and merges all text before field mapping.
-    Supports up to 5 pages per submission.
-    """
     if not GOOGLE_VISION_API_KEY:
         raise HTTPException(status_code=500, detail="Google Vision API key not configured.")
-
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
-
     if len(files) > 5:
         raise HTTPException(status_code=400, detail="Maximum 5 pages allowed per submission.")
 
@@ -121,10 +118,7 @@ async def extract_from_images(files: List[UploadFile] = File(...)):
             all_text_parts.append(f"--- {page_label.upper()} ---\n{page_text}")
 
     if not all_text_parts:
-        raise HTTPException(
-            status_code=422,
-            detail="No text could be detected in any of the uploaded images. Please ensure forms are clearly visible and well-lit."
-        )
+        raise HTTPException(status_code=422, detail="No text detected. Ensure forms are clearly visible and well-lit.")
 
     merged_text = "\n\n".join(all_text_parts)
     return {"raw_text": merged_text, "pages": len(all_text_parts), "char_count": len(merged_text)}
@@ -135,63 +129,63 @@ async def extract_from_images(files: List[UploadFile] = File(...)):
 # ─────────────────────────────────────────────
 @app.post("/api/map")
 async def map_fields(payload: dict):
-    """
-    Takes merged OCR text from all pages and maps to Kobo field values.
-    Uses Claude AI for intelligent field extraction across checkbox, text, and numeric fields.
-    """
     raw_text = payload.get("raw_text", "")
     if not raw_text:
         raise HTTPException(status_code=400, detail="No raw text provided.")
 
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="Anthropic API key not configured.")
+
+    # Build detailed field descriptions with explicit option keys
     fields_description = []
     for field in FORM_CONFIG["fields"]:
         if field["type"] == "select_multiple":
-            opts = ", ".join([f"'{k}' ({v})" for k, v in field["options"].items()])
+            opts = "\n    ".join([f"KEY '{k}' = label '{v}'" for k, v in field["options"].items()])
             fields_description.append(
-                f"- {field['kobo_name']} [{field['type']}]: \"{field['label']}\"\n  Options: {opts}"
+                f"FIELD: {field['kobo_name']}\n  TYPE: select_multiple\n  QUESTION: {field['label']}\n  OPTIONS:\n    {opts}"
             )
         else:
             fields_description.append(
-                f"- {field['kobo_name']} [{field['type']}]: \"{field['label']}\""
+                f"FIELD: {field['kobo_name']}\n  TYPE: {field['type']}\n  QUESTION: {field['label']}"
             )
 
-    fields_str = "\n".join(fields_description)
+    fields_str = "\n\n".join(fields_description)
 
-    prompt = f"""You are a data extraction assistant. A handwritten paper survey form has been scanned and OCR'd. The form may span multiple pages — all pages are included below separated by page markers.
+    prompt = f"""You are an expert data extraction assistant specializing in handwritten survey forms. 
 
-Your job is to extract the respondent's answers and map them to the correct Kobo form fields.
+A paper survey has been scanned and the text extracted via OCR. Your job is to read the OCR text carefully and extract the respondent's answers into the correct Kobo form fields.
 
-IMPORTANT RULES:
-1. For select_multiple fields: return a space-separated string of the matching option KEYS (not labels).
-   Example: "mobile_money_account savings_group"
-2. For text fields: return the written text exactly as found.
-3. For integer fields: return only the number as a string.
-4. For date fields: return in YYYY-MM-DD format.
-5. If a checkbox or tick mark (✓ or √ or V or X) is next to an option, include that option's key.
-6. If a field is blank or unanswered, return null.
-7. Return ONLY a valid JSON object. No explanation, no markdown, no extra text.
-8. For names: separate First_Name and Last_Name if a full name appears.
-9. Look across ALL pages for answers — do not stop at page 1.
+CRITICAL INSTRUCTIONS:
+1. CHECKBOXES & TICKS: OCR renders ticks/checkmarks as √, V, ✓, or similar. If you see these symbols next to an option label, that option IS selected.
+2. select_multiple fields: Return ONLY the option KEY(s) as a space-separated string. Example: if "Mobile money account" and "Savings group" are ticked, return "mobile_money_account savings_group"
+3. text fields: Return the handwritten text exactly as written.
+4. integer fields: Return only the number. No currency symbols, no text.
+5. date fields: Return in YYYY-MM-DD format. Example: "19/04/2026" becomes "2026-04-19"
+6. If a field has NO answer or is blank, return null — do not guess.
+7. Look through ALL pages carefully — answers span multiple pages.
+8. Return ONLY a valid JSON object. Absolutely no explanation, markdown, or extra text.
 
-FORM FIELDS TO EXTRACT:
+CHECKBOX DETECTION RULE — VERY IMPORTANT:
+- Look for √ or V or ✓ symbols IMMEDIATELY before or after an option label
+- Example OCR text: "√Self-employed" means Self-employed IS selected
+- Example OCR text: "□Single √Married □Divorced" means Married IS selected
+- Do NOT select options that only have □ or empty boxes next to them
+
+FORM FIELDS:
 {fields_str}
 
-OCR TEXT FROM ALL SCANNED PAGES:
+OCR TEXT FROM SCANNED FORM (all pages):
 ---
 {raw_text}
 ---
 
-Return a JSON object with kobo field names as keys and extracted values as values."""
+Return a single JSON object mapping kobo field names to extracted values. Nothing else."""
 
     anthropic_payload = {
-        "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 2000,
+        "model": "claude-sonnet-4-5",
+        "max_tokens": 3000,
         "messages": [{"role": "user", "content": prompt}]
     }
-
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-    if not anthropic_key:
-        raise HTTPException(status_code=500, detail="Anthropic API key not configured. Add ANTHROPIC_API_KEY to environment variables.")
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
@@ -199,20 +193,18 @@ Return a JSON object with kobo field names as keys and extracted values as value
             headers={
                 "Content-Type": "application/json",
                 "anthropic-version": "2023-06-01",
-                "x-api-key": anthropic_key
+                "x-api-key": ANTHROPIC_API_KEY
             },
             json=anthropic_payload
         )
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"AI mapping error: {response.text}"
-        )
+        raise HTTPException(status_code=502, detail=f"AI mapping error: {response.text}")
 
     ai_response = response.json()
     raw_output = ai_response["content"][0]["text"].strip()
 
+    # Strip markdown fences if present
     if raw_output.startswith("```"):
         raw_output = re.sub(r"^```[a-zA-Z]*\n?", "", raw_output)
         raw_output = re.sub(r"\n?```$", "", raw_output)
@@ -220,17 +212,15 @@ Return a JSON object with kobo field names as keys and extracted values as value
     try:
         mapped_fields = json.loads(raw_output)
     except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail="AI returned malformed JSON. Please try again."
-        )
+        raise HTTPException(status_code=500, detail="AI returned malformed JSON. Please try again.")
 
+    # Validate against known field names
     valid_field_names = {f["kobo_name"] for f in FORM_CONFIG["fields"]}
     cleaned = {}
     for k, v in mapped_fields.items():
         if k not in valid_field_names:
             continue
-        if v is not None and str(v).strip() != "":
+        if v is not None and str(v).strip() not in ("", "null", "None"):
             cleaned[k] = v
 
     return {
@@ -241,14 +231,10 @@ Return a JSON object with kobo field names as keys and extracted values as value
 
 
 # ─────────────────────────────────────────────
-# STEP 3: SUBMIT — POST confirmed data to Kobo API
+# STEP 3: SUBMIT — POST to Kobo API
 # ─────────────────────────────────────────────
 @app.post("/api/submit")
 async def submit_to_kobo(payload: dict):
-    """
-    Receives reviewed/confirmed field values and submits to Kobo API.
-    Only called AFTER data collector reviews and confirms the preview.
-    """
     if not KOBO_TOKEN:
         raise HTTPException(status_code=500, detail="Kobo API token not configured.")
 
@@ -256,7 +242,13 @@ async def submit_to_kobo(payload: dict):
     if not fields:
         raise HTTPException(status_code=400, detail="No field data provided.")
 
+    # Remove null/empty values before submission
+    clean_fields = {k: v for k, v in fields.items() if v is not None and str(v).strip() != ""}
+
     asset_uid = FORM_CONFIG["asset_uid"]
+
+    # Kobo API v2 requires submission via the submissions endpoint
+    # with data wrapped in a 'submission' key
     url = f"{KOBO_BASE_URL}/assets/{asset_uid}/data/"
 
     headers = {
@@ -264,24 +256,73 @@ async def submit_to_kobo(payload: dict):
         "Content-Type": "application/json"
     }
 
-    fields["start"] = datetime.utcnow().isoformat() + "Z"
-    fields["end"] = datetime.utcnow().isoformat() + "Z"
+    now = datetime.utcnow().isoformat() + "Z"
+    clean_fields["start"] = now
+    clean_fields["end"] = now
+    clean_fields["__version__"] = ""  # Kobo sometimes requires this
+
+    submission_body = {"submission": clean_fields}
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(url, headers=headers, json=fields)
+        response = await client.post(url, headers=headers, json=submission_body)
 
     if response.status_code in (200, 201):
-        resp_data = response.json()
-        return {
-            "success": True,
-            "submission_id": resp_data.get("id") or resp_data.get("_id"),
-            "message": "Form submitted successfully to Kobo."
-        }
-    else:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Kobo API rejected the submission: {response.status_code} — {response.text}"
+        try:
+            resp_data = response.json()
+            sub_id = resp_data.get("id") or resp_data.get("_id") or "confirmed"
+        except Exception:
+            sub_id = "confirmed"
+        return {"success": True, "submission_id": sub_id, "message": "Submitted successfully to Kobo."}
+
+    # If wrapped submission fails, try flat JSON (some Kobo versions prefer this)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response2 = await client.post(url, headers=headers, json=clean_fields)
+
+    if response2.status_code in (200, 201):
+        try:
+            resp_data = response2.json()
+            sub_id = resp_data.get("id") or resp_data.get("_id") or "confirmed"
+        except Exception:
+            sub_id = "confirmed"
+        return {"success": True, "submission_id": sub_id, "message": "Submitted successfully to Kobo."}
+
+    raise HTTPException(
+        status_code=502,
+        detail=f"Kobo submission failed: {response2.status_code} — {response2.text[:500]}"
+    )
+
+
+# ─────────────────────────────────────────────
+# DEBUG: Test Kobo connection and see raw response
+# ─────────────────────────────────────────────
+@app.get("/api/debug-kobo")
+async def debug_kobo():
+    """Test endpoint — shows raw Kobo API response to diagnose submission issues."""
+    if not KOBO_TOKEN:
+        return {"error": "KOBO_TOKEN not set"}
+
+    asset_uid = FORM_CONFIG["asset_uid"]
+    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/data/"
+    headers = {"Authorization": f"Token {KOBO_TOKEN}", "Content-Type": "application/json"}
+
+    # Send a minimal test submission
+    test_payload = {"First_Name": "TEST_DEBUG", "Last_Name": "DELETE_ME"}
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        # First check if token works by listing asset
+        asset_resp = await client.get(
+            f"{KOBO_BASE_URL}/assets/{asset_uid}/",
+            headers={"Authorization": f"Token {KOBO_TOKEN}"}
         )
+        # Try submission
+        sub_resp = await client.post(url, headers=headers, json=test_payload)
+        sub_resp2 = await client.post(url, headers=headers, json={"submission": test_payload})
+
+    return {
+        "asset_check": {"status": asset_resp.status_code, "body": asset_resp.text[:300]},
+        "flat_submission": {"status": sub_resp.status_code, "body": sub_resp.text[:500]},
+        "wrapped_submission": {"status": sub_resp2.status_code, "body": sub_resp2.text[:500]},
+    }
 
 
 # ─────────────────────────────────────────────
