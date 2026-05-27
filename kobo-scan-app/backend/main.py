@@ -2,6 +2,14 @@
 Kobo Scan App - Backend API
 Handles: image upload → Google Vision OCR → field mapping → Kobo API submission
 Supports multi-page forms (up to 5 pages per participant)
+
+FIX: Kobo does not accept JSON POST to /api/v2/assets/{uid}/submissions/
+     The correct method is ODK-compatible XML submission to:
+     https://kc.kobotoolbox.org/api/v1/submissions  (with XML + multipart)
+     
+     We build a minimal XForm-compatible XML envelope, wrap it in
+     multipart/form-data, and POST it. Kobo reads the <instanceID> and
+     the <_xform_id_string> inside the XML to route it to the right form.
 """
 
 import os
@@ -9,6 +17,7 @@ import json
 import base64
 import httpx
 import re
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -40,6 +49,57 @@ GOOGLE_VISION_API_KEY = os.getenv("GOOGLE_VISION_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 KOBO_BASE_URL = "https://kf.kobotoolbox.org/api/v2"
 
+# ODK submission endpoint — this is the one that actually accepts new data
+KOBO_SUBMISSION_URL = "https://kc.kobotoolbox.org/api/v1/submissions"
+
+
+# ─────────────────────────────────────────────
+# HELPER: Build ODK-compatible XML from field dict
+# ─────────────────────────────────────────────
+def build_submission_xml(fields: dict, asset_uid: str) -> str:
+    """
+    Wraps field data into the minimal XForm XML envelope that Kobo expects.
+    
+    Kobo uses the <id> attribute on the root element AND the <instanceID>
+    inside <meta> to identify which form the submission belongs to and to
+    deduplicate submissions. Both are required for reliable routing.
+    """
+    now = datetime.utcnow().isoformat() + "Z"
+    instance_id = str(uuid.uuid4())
+
+    # Build one XML tag per field — skip None/empty values
+    field_lines = []
+    for key, value in fields.items():
+        if value is None or str(value).strip() in ("", "null", "None"):
+            continue
+        # Escape any XML special characters in the value
+        safe_value = (
+            str(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&apos;")
+        )
+        field_lines.append(f"  <{key}>{safe_value}</{key}>")
+
+    fields_xml = "\n".join(field_lines)
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<{asset_uid} id="{asset_uid}">
+  <formhub>
+    <uuid>{asset_uid}</uuid>
+  </formhub>
+  <start>{now}</start>
+  <end>{now}</end>
+{fields_xml}
+  <meta>
+    <instanceID>uuid:{instance_id}</instanceID>
+  </meta>
+</{asset_uid}>"""
+
+    return xml, instance_id
+
 
 # ─────────────────────────────────────────────
 # HEALTH CHECK
@@ -63,7 +123,10 @@ async def ocr_single_image(contents: bytes, page_label: str = "") -> str:
         img = Image.open(io.BytesIO(contents))
         img.verify()
     except Exception:
-        raise HTTPException(status_code=400, detail=f"Invalid image file{' (' + page_label + ')' if page_label else ''}.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image file{' (' + page_label + ')' if page_label else ''}."
+        )
 
     img = Image.open(io.BytesIO(contents))
     max_dim = 4000
@@ -118,7 +181,10 @@ async def extract_from_images(files: List[UploadFile] = File(...)):
             all_text_parts.append(f"--- {page_label.upper()} ---\n{page_text}")
 
     if not all_text_parts:
-        raise HTTPException(status_code=422, detail="No text detected. Ensure forms are clearly visible and well-lit.")
+        raise HTTPException(
+            status_code=422,
+            detail="No text detected. Ensure forms are clearly visible and well-lit."
+        )
 
     merged_text = "\n\n".join(all_text_parts)
     return {"raw_text": merged_text, "pages": len(all_text_parts), "char_count": len(merged_text)}
@@ -231,7 +297,7 @@ Return a single JSON object mapping kobo field names to extracted values. Nothin
 
 
 # ─────────────────────────────────────────────
-# STEP 3: SUBMIT — POST to Kobo API
+# STEP 3: SUBMIT — POST to Kobo via ODK XML
 # ─────────────────────────────────────────────
 @app.post("/api/submit")
 async def submit_to_kobo(payload: dict):
@@ -242,33 +308,35 @@ async def submit_to_kobo(payload: dict):
     if not fields:
         raise HTTPException(status_code=400, detail="No field data provided.")
 
-    # Remove null/empty values before submission
-    clean_fields = {k: v for k, v in fields.items() if v is not None and str(v).strip() != ""}
-
     asset_uid = FORM_CONFIG["asset_uid"]
 
-    # Kobo v2 correct submission endpoint
-    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/submissions/"
+    # Build XML submission — this is the format Kobo actually accepts
+    xml_str, instance_id = build_submission_xml(fields, asset_uid)
 
     headers = {
         "Authorization": f"Token {KOBO_TOKEN}",
-        "Content-Type": "application/json"
+        # NOTE: Do NOT set Content-Type here — httpx sets it automatically
+        # for multipart including the boundary, which Kobo requires
     }
 
-    now = datetime.utcnow().isoformat() + "Z"
-    clean_fields["start"] = now
-    clean_fields["end"] = now
+    # Kobo ODK endpoint expects multipart/form-data with the XML as a file
+    files_payload = {
+        "xml_submission_file": ("submission.xml", xml_str.encode("utf-8"), "text/xml")
+    }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(url, headers=headers, json=clean_fields)
+        response = await client.post(
+            KOBO_SUBMISSION_URL,
+            headers=headers,
+            files=files_payload
+        )
 
     if response.status_code in (200, 201):
-        try:
-            resp_data = response.json()
-            sub_id = resp_data.get("id") or resp_data.get("_id") or "confirmed"
-        except Exception:
-            sub_id = "confirmed"
-        return {"success": True, "submission_id": sub_id, "message": "Submitted successfully to Kobo."}
+        return {
+            "success": True,
+            "submission_id": instance_id,
+            "message": "Submitted successfully to Kobo."
+        }
 
     raise HTTPException(
         status_code=502,
@@ -277,35 +345,59 @@ async def submit_to_kobo(payload: dict):
 
 
 # ─────────────────────────────────────────────
-# DEBUG: Test Kobo connection and see raw response
+# DEBUG: Test Kobo connection — checks auth + submission format
 # ─────────────────────────────────────────────
 @app.get("/api/debug-kobo")
 async def debug_kobo():
-    """Test endpoint — shows raw Kobo API response to diagnose submission issues."""
+    """
+    Diagnostic endpoint.
+    1. Checks your token can read the asset (auth check)
+    2. Sends a minimal test XML submission (submission format check)
+    Visit /api/debug-kobo and look for:
+      asset_check → status 200 = token is valid
+      xml_submission → status 201 = submission works ✅
+    """
     if not KOBO_TOKEN:
         return {"error": "KOBO_TOKEN not set"}
 
     asset_uid = FORM_CONFIG["asset_uid"]
-    url = f"{KOBO_BASE_URL}/assets/{asset_uid}/submissions/"
-    headers = {"Authorization": f"Token {KOBO_TOKEN}", "Content-Type": "application/json"}
 
-    # Send a minimal test submission
-    test_payload = {"First_Name": "TEST_DEBUG", "Last_Name": "DELETE_ME"}
-
+    # Step 1: Auth check — can the token read this asset?
     async with httpx.AsyncClient(timeout=30.0) as client:
-        # First check if token works by listing asset
         asset_resp = await client.get(
             f"{KOBO_BASE_URL}/assets/{asset_uid}/",
             headers={"Authorization": f"Token {KOBO_TOKEN}"}
         )
-        # Try submission
-        sub_resp = await client.post(url, headers=headers, json=test_payload)
-        sub_resp2 = await client.post(url, headers=headers, json={"submission": test_payload})
+
+    # Step 2: Build and send a test XML submission
+    test_fields = {
+        "First_Name": "TEST_DEBUG",
+        "Last_Name": "DELETE_ME"
+    }
+    xml_str, instance_id = build_submission_xml(test_fields, asset_uid)
+
+    files_payload = {
+        "xml_submission_file": ("submission.xml", xml_str.encode("utf-8"), "text/xml")
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        sub_resp = await client.post(
+            KOBO_SUBMISSION_URL,
+            headers={"Authorization": f"Token {KOBO_TOKEN}"},
+            files=files_payload
+        )
 
     return {
-        "asset_check": {"status": asset_resp.status_code, "body": asset_resp.text[:300]},
-        "flat_submission": {"status": sub_resp.status_code, "body": sub_resp.text[:500]},
-        "wrapped_submission": {"status": sub_resp2.status_code, "body": sub_resp2.text[:500]},
+        "asset_check": {
+            "status": asset_resp.status_code,
+            "note": "200 = token valid ✅  |  401/403 = bad token ❌"
+        },
+        "xml_submission": {
+            "status": sub_resp.status_code,
+            "note": "201 = submission works ✅  |  anything else = still broken ❌",
+            "body": sub_resp.text[:500],
+            "instance_id_used": instance_id
+        }
     }
 
 
