@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Emerging Leaders - Form Scanner</title>
+  <title>Form Scanner</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
@@ -30,6 +30,16 @@
     .card h2 { font-size: 17px; margin-bottom: 6px; color: #1a365d; }
     .card p { font-size: 14px; color: #4a5568; line-height: 1.5; }
 
+    /* FORM SELECTOR */
+    .form-selector { margin-bottom: 20px; }
+    .form-selector label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-selector select { width: 100%; padding: 12px 14px; border: 2px solid #3182ce; border-radius: 10px; font-size: 15px; font-weight: 500; color: #1a365d; background: white; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%233182ce' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    .form-selector select:focus { border-color: #2c5282; box-shadow: 0 0 0 3px rgba(49,130,206,0.15); }
+
+    /* COUNTER BADGE */
+    .counter-badge { display: flex; align-items: center; gap: 10px; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 13px; color: #2b6cb0; }
+    .counter-badge strong { font-size: 20px; color: #1a365d; }
+
     /* PAGE SLOTS */
     .page-slots { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
     .page-slot { border: 2px dashed #bee3f8; border-radius: 12px; overflow: hidden; background: #ebf8ff; }
@@ -42,7 +52,6 @@
     .page-slot-actions { display: flex; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.04); }
     .add-page-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 2px dashed #90cdf4; border-radius: 12px; background: white; color: #3182ce; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 8px; }
     .add-page-btn:hover { border-color: #3182ce; background: #ebf8ff; }
-    .page-count-badge { background: #3182ce; color: white; border-radius: 20px; padding: 2px 10px; font-size: 12px; }
 
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; width: 100%; }
     .btn-primary { background: #3182ce; color: white; }
@@ -66,23 +75,39 @@
     .field-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f0f4f8; }
     .field-group:last-child { border-bottom: none; margin-bottom: 0; }
     .field-label { font-size: 12px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .field-label.missing { color: #e53e3e; }
     .field-input { width: 100%; padding: 10px 12px; border: 2px solid #3182ce; border-radius: 8px; font-size: 15px; outline: none; }
+    .field-input.empty { border-color: #fc8181; background: #fff5f5; }
     .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
     .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
     .checkbox-item.checked { border-color: #3182ce; background: #ebf8ff; }
     .checkbox-item input[type=checkbox] { width: 18px; height: 18px; accent-color: #3182ce; flex-shrink: 0; }
     .checkbox-item label { font-size: 14px; cursor: pointer; }
 
+    /* SELECT ONE */
+    .select-one-group { display: flex; flex-direction: column; gap: 6px; }
+    .radio-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .radio-item.checked { border-color: #3182ce; background: #ebf8ff; }
+    .radio-item input[type=radio] { width: 18px; height: 18px; accent-color: #3182ce; flex-shrink: 0; }
+
     .alert { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
     .alert-warning { background: #fefcbf; border: 1px solid #f6e05e; color: #744210; }
     .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
     .alert-error { background: #fff5f5; border: 1px solid #fc8181; color: #742a2a; }
 
+    /* CAPTURE SUMMARY */
+    .capture-summary { display: flex; gap: 10px; margin-bottom: 16px; }
+    .capture-stat { flex: 1; background: white; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .capture-stat .num { font-size: 24px; font-weight: 700; }
+    .capture-stat .lbl { font-size: 11px; color: #718096; margin-top: 2px; }
+    .capture-stat.good .num { color: #38a169; }
+    .capture-stat.warn .num { color: #dd6b20; }
+
     .success-screen { text-align: center; padding: 40px 20px; }
     .success-icon { font-size: 64px; margin-bottom: 16px; }
     .success-screen h2 { font-size: 22px; color: #276749; margin-bottom: 8px; }
     .success-screen p { font-size: 14px; color: #4a5568; margin-bottom: 24px; }
-    .submission-id { background: #f0fff4; border: 1px solid #9ae6b4; padding: 10px 16px; border-radius: 8px; font-family: monospace; font-size: 14px; color: #276749; margin-bottom: 24px; }
+    .submission-id { background: #f0fff4; border: 1px solid #9ae6b4; padding: 10px 16px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #276749; margin-bottom: 24px; word-break: break-all; }
 
     .hidden { display: none !important; }
     .section-badge { display: inline-block; background: #1a365d; color: white; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -95,8 +120,8 @@
 <header>
   <div class="logo">📋</div>
   <div>
-    <h1>Form Scanner</h1>
-    <p>Emerging Leaders Baseline</p>
+    <h1 id="header-title">Form Scanner</h1>
+    <p id="header-subtitle">Select a form to begin</p>
   </div>
 </header>
 
@@ -111,14 +136,34 @@
     <div class="step" id="step-4-ind"><div class="step-circle">4</div><div class="step-label">Submit</div></div>
   </div>
 
-  <!-- SCREEN 1: Upload (multi-page) -->
+  <!-- SCREEN 1: Upload -->
   <div id="screen-upload">
     <div class="card">
+      <h2>📋 Select Form</h2>
+      <p style="margin-bottom:14px">Choose the form you are scanning before uploading.</p>
+
+      <div class="form-selector">
+        <label>Form / Project</label>
+        <select id="form-select" onchange="onFormChange()">
+          <option value="">-- Select a form --</option>
+        </select>
+      </div>
+
+      <!-- Submission counter — shows after form selected -->
+      <div class="counter-badge hidden" id="counter-badge">
+        <span>📊</span>
+        <div>
+          <strong id="counter-num">—</strong>
+          <span id="counter-label"> submissions recorded</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="scan-card" style="display:none">
       <h2>📸 Scan Form Pages</h2>
       <p>Upload each page of the form separately. The app will combine all pages for one participant.</p>
 
       <div class="page-slots" id="page-slots">
-        <!-- Page 1 — always visible -->
         <div class="page-slot" id="slot-0">
           <div class="page-slot-header" onclick="triggerFileInput(0)">
             <div class="page-slot-label">📄 Page 1 <span style="font-weight:400;color:#718096">(required)</span></div>
@@ -144,11 +189,10 @@
         </button>
       </div>
 
-      <!-- Hidden file inputs — one per slot, created dynamically -->
       <div id="file-inputs"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="tips-card" style="display:none">
       <h2>💡 Tips for best results</h2>
       <p style="margin-bottom:8px">✅ Good lighting — no shadows on text</p>
       <p style="margin-bottom:8px">✅ Hold phone directly above the form</p>
@@ -161,9 +205,14 @@
   <!-- SCREEN 2: Review -->
   <div id="screen-review" class="hidden">
     <div class="alert alert-warning">
-      ⚠️ <strong>Review every field carefully before submitting.</strong> Tap any value to edit it. Fields highlighted in blue need your attention.
+      ⚠️ <strong>Review every field carefully before submitting.</strong> Tap any value to edit it. Red fields were not detected — enter them manually.
     </div>
+
+    <!-- Capture summary stats -->
+    <div class="capture-summary" id="capture-summary"></div>
+
     <div id="review-fields"></div>
+
     <div class="card" style="margin-top:16px">
       <button class="btn btn-success" id="submit-btn" onclick="submitToKobo()">✅ Confirm & Submit to Kobo</button>
       <div style="margin-top:10px">
@@ -178,7 +227,7 @@
       <div class="success-screen">
         <div class="success-icon">✅</div>
         <h2>Submitted Successfully!</h2>
-        <p>The form has been submitted to KoboToolbox.</p>
+        <p id="success-form-name">The form has been submitted to KoboToolbox.</p>
         <div class="submission-id" id="submission-id-display"></div>
         <button class="btn btn-primary" onclick="resetToUpload()">📸 Scan Another Form</button>
       </div>
@@ -193,10 +242,91 @@
 
 <script>
   // ── STATE ──
-  let selectedFiles = {};   // { slotIndex: File }
+  let selectedFiles = {};
   let slotCount = 1;
   let currentMappedFields = {};
   let formConfig = null;
+  let currentFormSlug = '';
+  let fieldReview = [];
+
+  // ── INIT: Load forms list from backend ──
+  async function loadForms() {
+    try {
+      const resp = await fetch('/api/forms');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const select = document.getElementById('form-select');
+
+      // Read ?form= from URL and pre-select if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlForm = urlParams.get('form');
+
+      data.forms.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.slug;
+        opt.textContent = f.title;
+        if (f.slug === urlForm) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // If URL had a form param, trigger the change
+      if (urlForm) {
+        select.value = urlForm;
+        onFormChange();
+      }
+    } catch(e) {
+      console.warn('Could not load forms list:', e);
+    }
+  }
+
+  // ── FORM SELECTION ──
+  async function onFormChange() {
+    const select = document.getElementById('form-select');
+    const slug = select.value;
+    currentFormSlug = slug;
+
+    if (!slug) {
+      document.getElementById('scan-card').style.display = 'none';
+      document.getElementById('tips-card').style.display = 'none';
+      document.getElementById('counter-badge').classList.add('hidden');
+      document.getElementById('header-subtitle').textContent = 'Select a form to begin';
+      return;
+    }
+
+    // Update header
+    const selectedText = select.options[select.selectedIndex].text;
+    document.getElementById('header-subtitle').textContent = selectedText;
+
+    // Show scan card
+    document.getElementById('scan-card').style.display = 'block';
+    document.getElementById('tips-card').style.display = 'block';
+
+    // Load submission count
+    loadCount(slug);
+  }
+
+  async function loadCount(slug) {
+    const badge = document.getElementById('counter-badge');
+    const numEl = document.getElementById('counter-num');
+    const lblEl = document.getElementById('counter-label');
+
+    badge.classList.remove('hidden');
+    numEl.textContent = '…';
+    lblEl.textContent = ' loading count…';
+
+    try {
+      const resp = await fetch(`/api/count?form=${encodeURIComponent(slug)}`);
+      if (!resp.ok) {
+        badge.classList.add('hidden');
+        return;
+      }
+      const data = await resp.json();
+      numEl.textContent = data.total_submissions;
+      lblEl.textContent = ' submissions recorded for this form';
+    } catch(e) {
+      badge.classList.add('hidden');
+    }
+  }
 
   // ── CREATE FILE INPUT FOR A SLOT ──
   function createFileInput(index) {
@@ -213,6 +343,10 @@
   }
 
   function triggerFileInput(index) {
+    if (!currentFormSlug) {
+      showError('Please select a form first.', 'upload');
+      return;
+    }
     createFileInput(index);
     document.getElementById(`file-input-${index}`).click();
   }
@@ -233,7 +367,6 @@
       img.src = ev.target.result;
       preview.style.display = 'block';
       slot.classList.add('has-image');
-
       updateUI();
     };
     reader.readAsDataURL(file);
@@ -242,7 +375,6 @@
   // ── ADD A NEW PAGE SLOT ──
   function addPageSlot() {
     if (slotCount >= 5) return;
-
     const index = slotCount;
     slotCount++;
 
@@ -262,17 +394,14 @@
         </div>
       </div>
     `;
-
     document.getElementById('page-slots').appendChild(slot);
     updateUI();
-    // Auto-trigger camera for the new slot
     setTimeout(() => triggerFileInput(index), 100);
   }
 
   // ── REMOVE A PAGE ──
   function removePage(index) {
     if (index === 0 && slotCount === 1) {
-      // Just clear page 1, don't remove the slot
       delete selectedFiles[index];
       document.getElementById(`preview-${index}`).style.display = 'none';
       document.getElementById(`slot-${index}`).classList.remove('has-image');
@@ -288,11 +417,8 @@
   function updateUI() {
     const fileCount = Object.keys(selectedFiles).length;
     const hasAtLeastOne = fileCount > 0;
+    document.getElementById('extract-btn').disabled = !hasAtLeastOne || !currentFormSlug;
 
-    // Enable/disable extract button
-    document.getElementById('extract-btn').disabled = !hasAtLeastOne;
-
-    // Show/hide add page button
     const addBtn = document.getElementById('add-page-btn');
     if (hasAtLeastOne && slotCount < 5) {
       addBtn.style.display = 'flex';
@@ -302,28 +428,36 @@
     }
   }
 
-  // ── EXTRACT FIELDS (send all pages) ──
+  // ── EXTRACT FIELDS ──
   async function extractFields() {
+    if (!currentFormSlug) {
+      showError('Please select a form first.', 'upload');
+      return;
+    }
+
     const fileEntries = Object.entries(selectedFiles);
     if (fileEntries.length === 0) return;
 
     showLoading(`Scanning ${fileEntries.length > 1 ? fileEntries.length + ' pages' : 'form'}...`);
 
     const formData = new FormData();
-    // Sort by slot index to maintain page order
     fileEntries.sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-    fileEntries.forEach(([_, file]) => {
-      formData.append('files', file);
-    });
+    fileEntries.forEach(([_, file]) => formData.append('files', file));
 
     let rawText;
     try {
-      const extractResp = await fetch('/api/extract', { method: 'POST', body: formData });
+      // ✅ FIX: pass ?form= slug in the URL
+      const extractResp = await fetch(`/api/extract?form=${encodeURIComponent(currentFormSlug)}`, {
+        method: 'POST',
+        body: formData
+      });
       const extractData = await extractResp.json();
 
       if (!extractResp.ok) {
         hideLoading();
-        showError(extractData.detail || 'OCR failed. Please try clearer images.');
+        // ✅ FIX: always extract .detail string, never show raw object
+        const errMsg = (extractData && extractData.detail) ? extractData.detail : 'OCR failed. Please try clearer images.';
+        showError(errMsg, 'upload');
         return;
       }
       rawText = extractData.raw_text;
@@ -331,31 +465,34 @@
       updateLoading(`Mapping fields from ${pages} page${pages > 1 ? 's' : ''} with AI...`);
     } catch(err) {
       hideLoading();
-      showError('Network error during OCR. Please check your connection.');
+      showError('Network error during OCR: ' + err.message, 'upload');
       return;
     }
 
     try {
+      // ✅ FIX: pass form slug in the JSON body
       const mapResp = await fetch('/api/map', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw_text: rawText })
+        body: JSON.stringify({ raw_text: rawText, form: currentFormSlug })
       });
       const mapData = await mapResp.json();
 
       if (!mapResp.ok) {
         hideLoading();
-        showError(mapData.detail || 'Field mapping failed. Please try again.');
+        const errMsg = (mapData && mapData.detail) ? mapData.detail : 'Field mapping failed. Please try again.';
+        showError(errMsg, 'upload');
         return;
       }
 
       currentMappedFields = mapData.mapped_fields;
       formConfig = mapData.form_config;
+      fieldReview = mapData.field_review || [];
       hideLoading();
       renderReview();
     } catch(err) {
       hideLoading();
-      showError('Network error during field mapping.');
+      showError('Network error during field mapping: ' + err.message, 'upload');
     }
   }
 
@@ -364,34 +501,38 @@
     const container = document.getElementById('review-fields');
     container.innerHTML = '';
 
-    const sections = {
-      'Consent': ['Do_you_consent_to_sh_information_with_us','Do_you_consent_to_us_and_future_partners','We_would_love_to_fol_he_best_way_to_do_it'],
-      'Basic Information': ['Today_s_Date','First_Name','Last_Name','Your_Year_of_Birth','Your_Phone_Number','Age','Marital_Status','Gender','Do_you_have_a_form_of_disabili','If_yes_please_specify','Do_you_require_any_s_bigger_writings_etc','Your_area_of_residence','County'],
-      'Education': ['What_is_the_highest_tick_all_that_apply','Do_you_have_a_certif_of_education_reached'],
-      'Income': ['What_is_your_main_source_of_income','How_many_days_in_a_week_do_you_Work','What_is_the_frequenc_eceive_your_earnings','Approximately_how_mu_you_earn_in_a_month'],
-      'Savings & Borrowing': ['In_the_past_3_months_have_you','If_Yes_where_did_you_save_you','Specify','How_often_do_you_save_money','In_the_past_3_months_have_you_001','Specify_001','What_was_the_reason_for_borrow','Specify_002'],
-      'Wellbeing': ['Imagine_a_ladder_wit_Best_possible_life','On_which_step_do_you_Best_possible_life','When_you_face_difficult_situat','Specify_003'],
-      'Relationships & Work': ['Are_you_in_a_leadership_role_i','If_yes_where','What_do_you_consider_the_bigge','Specify_004','If_you_are_already_in_work_wh','Specify_005','What_kind_of_job_or_believed_in_yourself'],
-      'Training Info': ['Did_this_individual_V_Training_Sessions','If_yes_indicated_th_ended_eg_001_or_023']
-    };
+    // ✅ FIX: dynamic review — works for ALL forms, not just EL Baseline
+    // Group fields by detected section patterns or just show all flat
+    const captured = fieldReview.filter(f => f.captured).length;
+    const total = fieldReview.length;
+    const missed = total - captured;
 
-    for (const [secName, fieldNames] of Object.entries(sections)) {
-      const cardDiv = document.createElement('div');
-      cardDiv.className = 'card';
+    // Show capture summary
+    const summaryEl = document.getElementById('capture-summary');
+    summaryEl.innerHTML = `
+      <div class="capture-stat good">
+        <div class="num">${captured}</div>
+        <div class="lbl">Fields detected</div>
+      </div>
+      <div class="capture-stat ${missed > 0 ? 'warn' : 'good'}">
+        <div class="num">${missed}</div>
+        <div class="lbl">Need review</div>
+      </div>
+      <div class="capture-stat">
+        <div class="num">${total}</div>
+        <div class="lbl">Total fields</div>
+      </div>
+    `;
 
-      const badge = document.createElement('div');
-      badge.className = 'section-badge';
-      badge.textContent = secName;
-      cardDiv.appendChild(badge);
+    // Render all fields in one card (or grouped if section info available)
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
 
-      fieldNames.forEach(fname => {
-        const fieldDef = formConfig.fields.find(f => f.kobo_name === fname);
-        if (!fieldDef) return;
-        cardDiv.appendChild(createFieldGroup(fieldDef, currentMappedFields[fname]));
-      });
+    fieldReview.forEach(fieldDef => {
+      cardDiv.appendChild(createFieldGroup(fieldDef, fieldDef.value));
+    });
 
-      container.appendChild(cardDiv);
-    }
+    container.appendChild(cardDiv);
 
     document.getElementById('step-3-ind').classList.add('active');
     document.getElementById('line-2').classList.add('done');
@@ -406,8 +547,8 @@
     group.dataset.fieldName = field.kobo_name;
 
     const label = document.createElement('div');
-    label.className = 'field-label';
-    label.textContent = field.label;
+    label.className = 'field-label' + (!field.captured ? ' missing' : '');
+    label.textContent = field.label + (!field.captured ? ' ⚠ NOT DETECTED' : '');
     group.appendChild(label);
 
     if (field.type === 'select_multiple') {
@@ -415,7 +556,7 @@
       checkGroup.className = 'checkbox-group';
       const selectedValues = value ? String(value).split(' ') : [];
 
-      for (const [optKey, optLabel] of Object.entries(field.options)) {
+      for (const [optKey, optLabel] of Object.entries(field.options || {})) {
         const item = document.createElement('label');
         item.className = 'checkbox-item' + (selectedValues.includes(optKey) ? ' checked' : '');
 
@@ -435,14 +576,45 @@
         checkGroup.appendChild(item);
       }
       group.appendChild(checkGroup);
+
+    } else if (field.type === 'select_one') {
+      // ✅ NEW: render select_one as radio buttons for clean UX
+      const radioGroup = document.createElement('div');
+      radioGroup.className = 'select-one-group';
+      const radioName = 'radio_' + field.kobo_name;
+
+      for (const [optKey, optLabel] of Object.entries(field.options || {})) {
+        const item = document.createElement('label');
+        item.className = 'radio-item' + (value === optKey ? ' checked' : '');
+
+        const rb = document.createElement('input');
+        rb.type = 'radio';
+        rb.name = radioName;
+        rb.value = optKey;
+        rb.checked = (value === optKey);
+        rb.addEventListener('change', () => {
+          currentMappedFields[field.kobo_name] = rb.value;
+          radioGroup.querySelectorAll('.radio-item').forEach(i => i.classList.remove('checked'));
+          item.classList.add('checked');
+        });
+
+        const lbl = document.createElement('span');
+        lbl.textContent = optLabel;
+        item.appendChild(rb);
+        item.appendChild(lbl);
+        radioGroup.appendChild(item);
+      }
+      group.appendChild(radioGroup);
+
     } else {
       const input = document.createElement('input');
-      input.className = 'field-input';
+      input.className = 'field-input' + (!field.captured ? ' empty' : '');
       input.type = field.type === 'integer' ? 'number' : (field.type === 'date' ? 'date' : 'text');
       input.value = value || '';
-      input.placeholder = value ? '' : '(not detected — enter manually)';
+      input.placeholder = !field.captured ? '(not detected — enter manually)' : '';
       input.addEventListener('change', () => {
         currentMappedFields[field.kobo_name] = input.value || null;
+        input.classList.toggle('empty', !input.value);
       });
       group.appendChild(input);
     }
@@ -464,25 +636,32 @@
     showLoading('Submitting to KoboToolbox...');
 
     try {
+      // ✅ FIX: pass form slug in submit payload
       const resp = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: currentMappedFields })
+        body: JSON.stringify({ fields: currentMappedFields, form: currentFormSlug })
       });
       const data = await resp.json();
       hideLoading();
 
       if (!resp.ok) {
         document.getElementById('submit-btn').disabled = false;
-        const errMsg = data.detail || JSON.stringify(data) || 'Kobo submission failed.';
+        const errMsg = (data && data.detail) ? data.detail : 'Kobo submission failed.';
         showError('Submission failed: ' + errMsg, 'review');
         return;
       }
 
       document.getElementById('submission-id-display').textContent =
         'Submission ID: ' + (data.submission_id || 'Confirmed');
+      document.getElementById('success-form-name').textContent =
+        'Submitted to: ' + (data.form_title || 'KoboToolbox');
       document.getElementById('step-4-ind').classList.add('done');
       document.getElementById('line-3').classList.add('done');
+
+      // Refresh the counter after successful submission
+      if (currentFormSlug) loadCount(currentFormSlug);
+
       showScreen('success');
     } catch(err) {
       hideLoading();
@@ -523,9 +702,10 @@
     document.querySelectorAll('.alert-error').forEach(el => el.remove());
     const alertEl = document.createElement('div');
     alertEl.className = 'alert alert-error';
-    alertEl.innerHTML = `⚠️ ${msg}`;
+    // ✅ FIX: ensure msg is always a string
+    const safeMsg = (typeof msg === 'string') ? msg : JSON.stringify(msg);
+    alertEl.innerHTML = `⚠️ ${safeMsg}`;
 
-    // Show on current active screen, not always upload
     const targetScreen = screenName
       ? document.getElementById(`screen-${screenName}`)
       : (document.getElementById('screen-review').classList.contains('hidden')
@@ -543,8 +723,8 @@
     slotCount = 1;
     currentMappedFields = {};
     formConfig = null;
+    fieldReview = [];
 
-    // Reset slots — keep only slot 0
     const slotsContainer = document.getElementById('page-slots');
     slotsContainer.innerHTML = `
       <div class="page-slot" id="slot-0">
@@ -572,9 +752,15 @@
     });
     ['line-1','line-2','line-3'].forEach(id => document.getElementById(id).classList.remove('done'));
 
+    // Refresh counter for currently selected form
+    if (currentFormSlug) loadCount(currentFormSlug);
+
     showScreen('upload');
     window.scrollTo(0, 0);
   }
+
+  // ── BOOT ──
+  loadForms();
 </script>
 </body>
 </html>
