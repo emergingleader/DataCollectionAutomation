@@ -189,20 +189,24 @@ Return a JSON object with kobo field names as keys and extracted values as value
         "messages": [{"role": "user", "content": prompt}]
     }
 
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-    if not anthropic_key:
-        raise HTTPException(status_code=500, detail="Anthropic API key not configured. Add ANTHROPIC_API_KEY to environment variables.")
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if not gemini_key:
+        raise HTTPException(status_code=500, detail="Gemini API key not configured. Add GEMINI_API_KEY to environment variables.")
+
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+
+    gemini_payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": 2000
+        }
+    }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "Content-Type": "application/json",
-                "anthropic-version": "2023-06-01",
-                "x-api-key": anthropic_key
-            },
-            json=anthropic_payload
-        )
+        response = await client.post(gemini_url, json=gemini_payload)
 
     if response.status_code != 200:
         raise HTTPException(
@@ -211,7 +215,10 @@ Return a JSON object with kobo field names as keys and extracted values as value
         )
 
     ai_response = response.json()
-    raw_output = ai_response["content"][0]["text"].strip()
+    try:
+        raw_output = ai_response["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except (KeyError, IndexError) as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected Gemini response format: {str(e)}")
 
     if raw_output.startswith("```"):
         raw_output = re.sub(r"^```[a-zA-Z]*\n?", "", raw_output)
