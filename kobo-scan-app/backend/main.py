@@ -5,6 +5,10 @@ ACCURACY IMPROVEMENTS (no new APIs, no extra cost):
   - Claude returns confidence per field (high/low)
   - Only low-confidence fields flagged for review
   - High-confidence fields auto-accepted, shown collapsed
+
+PERFORMANCE IMPROVEMENTS:
+  - Keep-alive self-ping every 14 minutes prevents Render free-tier cold starts
+  - Runs as a background task on startup — zero cost, zero config needed
 """
 
 import os
@@ -56,6 +60,55 @@ GOOGLE_VISION_API_KEY = os.getenv("GOOGLE_VISION_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 KOBO_BASE_URL = "https://kf.kobotoolbox.org/api/v2"
 KOBO_SUBMISSION_URL = "https://kc.kobotoolbox.org/api/v1/submissions"
+
+
+# ═════════════════════════════════════════════════════════
+# KEEP-ALIVE SELF-PING
+# Render's free tier spins down servers after ~15 minutes
+# of inactivity, causing a 30–60 second "cold start" for
+# the next user. This background task pings /health every
+# 14 minutes so the server never reaches the idle threshold.
+#
+# How it works:
+#   - Starts automatically when the app boots (via @app.on_event)
+#   - Reads the app's own public URL from the RENDER_EXTERNAL_URL
+#     environment variable (set automatically by Render)
+#   - Falls back gracefully if the env var is missing (local dev)
+#   - Runs forever in the background — one lightweight GET per 14 min
+# ═════════════════════════════════════════════════════════
+KEEP_ALIVE_INTERVAL = 14 * 60  # 14 minutes in seconds
+
+async def keep_alive_loop():
+    """Pings /health every 14 minutes to prevent Render cold starts."""
+    # Wait 60 seconds after boot before first ping (let server settle)
+    await asyncio.sleep(60)
+
+    app_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+    if not app_url:
+        # Not running on Render (local dev) — skip silently
+        print("[keep-alive] RENDER_EXTERNAL_URL not set — skipping keep-alive ping (local dev)")
+        return
+
+    ping_url = f"{app_url}/health"
+    print(f"[keep-alive] Starting keep-alive ping every {KEEP_ALIVE_INTERVAL // 60} minutes → {ping_url}")
+
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(ping_url)
+            print(f"[keep-alive] Pinged {ping_url} — status {resp.status_code}")
+        except Exception as e:
+            # Non-fatal — log and continue. Network blips shouldn't kill the loop.
+            print(f"[keep-alive] Ping failed (will retry): {e}")
+
+        await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Launch keep-alive as a background task on server start."""
+    asyncio.create_task(keep_alive_loop())
+# ═════════════════════════════════════════════════════════
 
 
 def build_submission_xml(fields: dict, asset_uid: str) -> tuple:
@@ -119,7 +172,7 @@ def preprocess_image_for_ocr(contents: bytes) -> bytes:
 
 
 # ─────────────────────────────────────────────
-# CLAUDE PROMPT — now asks for confidence per field
+# CLAUDE PROMPT — asks for confidence per field
 # ─────────────────────────────────────────────
 def build_claude_prompt(raw_text: str, form_config: dict) -> str:
     fields_description = []
@@ -261,7 +314,7 @@ async def extract_from_images(
             img.verify()
         except Exception:
             raise HTTPException(status_code=400, detail=f"Invalid image on page {i+1}.")
-        # ✅ Preprocess: sharpen + contrast before OCR
+        # Preprocess: sharpen + contrast before OCR
         processed = preprocess_image_for_ocr(contents)
         img_b64 = base64.b64encode(processed).decode("utf-8")
         tasks.append(ocr_one_page(img_b64, f"Page {i+1}"))
@@ -269,7 +322,7 @@ async def extract_from_images(
     if not tasks:
         raise HTTPException(status_code=400, detail="No valid images found.")
 
-    # ✅ Parallel OCR
+    # Parallel OCR
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     all_text_parts = []
@@ -300,7 +353,6 @@ def recover_partial_json(text: str) -> dict:
     Returns a dict of whatever was successfully parsed.
     """
     recovered = {}
-    # Match complete field entries: "field_name": {"value": ..., "confidence": "..."}
     pattern = r'"([^"]+)"\s*:\s*\{[^}]*"value"\s*:\s*([^,}]+)[^}]*"confidence"\s*:\s*"(high|low)"[^}]*\}'
     for match in re.finditer(pattern, text):
         field_name = match.group(1)
@@ -317,9 +369,6 @@ async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str,
     prompt = build_claude_prompt(raw_text, form_config)
     payload = {
         "model": "claude-sonnet-4-5",
-        # ✅ FIX 1: Increased from 4000 to 8000
-        # EL Baseline has 43 fields × ~50 tokens each (with confidence) = ~2150 tokens
-        # Plus prompt overhead. 8000 gives plenty of headroom for all forms.
         "max_tokens": 8000,
         "stream": True,
         "messages": [{"role": "user", "content": prompt}]
@@ -365,25 +414,17 @@ async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str,
         cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", cleaned)
         cleaned = re.sub(r"\n?```$", "", cleaned)
 
-    # ✅ FIX 2: Try full JSON parse first; fall back to partial recovery if truncated
+    # Try full JSON parse first; fall back to partial recovery if truncated
     raw_mapped = None
     try:
         raw_mapped = json.loads(cleaned)
     except json.JSONDecodeError:
-        # Attempt to recover whatever fields were parsed before truncation
         raw_mapped = recover_partial_json(cleaned)
         if not raw_mapped:
-            # Nothing salvageable — genuinely malformed
             yield f"data: {json.dumps({'error': 'AI response was cut short. Please try again — this usually resolves on retry.'})}\n\n"
             return
-        # Partial recovery succeeded — continue with what we have
-        # Fields not in raw_mapped will appear as missing (red) in the review screen
 
-    # ─────────────────────────────────────────────
     # Parse confidence scores from Claude's response
-    # Claude returns: {"field": {"value": x, "confidence": "high"/"low"}}
-    # We split this into mapped_fields + confidence_map
-    # ─────────────────────────────────────────────
     valid_names = {f["kobo_name"] for f in form_config["fields"]}
     mapped_fields = {}
     confidence_map = {}
@@ -391,19 +432,18 @@ async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str,
     for k, v in raw_mapped.items():
         if k not in valid_names:
             continue
-        # Handle both formats: {value, confidence} dict or plain value
         if isinstance(v, dict) and "value" in v:
             field_value = v.get("value")
             confidence = v.get("confidence", "low")
         else:
             field_value = v
-            confidence = "high"  # Plain value = treat as high confidence
+            confidence = "high"
 
         if field_value is not None and str(field_value).strip() not in ("", "null", "None"):
             mapped_fields[k] = field_value
             confidence_map[k] = confidence
         else:
-            confidence_map[k] = "low"  # Missing = low confidence
+            confidence_map[k] = "low"
 
     # Build field review with confidence flags
     field_review = []
@@ -423,7 +463,6 @@ async def stream_claude(raw_text: str, form_config: dict) -> AsyncGenerator[str,
             "options": field.get("options", {})
         })
 
-    # Stats for the UI summary
     high_conf = sum(1 for f in field_review if not f["needs_review"])
     needs_review_count = sum(1 for f in field_review if f["needs_review"])
 
